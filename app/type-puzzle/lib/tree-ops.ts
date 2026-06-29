@@ -1,7 +1,7 @@
 import { TypeNode, NodeId, SlotRef } from './types';
 import { getAllIds } from './nodes';
 
-function findNode(root: TypeNode, id: NodeId): TypeNode | null {
+export function findNode(root: TypeNode, id: NodeId): TypeNode | null {
   if (root.id === id) return root;
   switch (root.kind) {
     case 'object': for (const p of root.props) { const r = findNode(p.value, id); if (r) return r; } break;
@@ -20,8 +20,6 @@ function findNode(root: TypeNode, id: NodeId): TypeNode | null {
   }
   return null;
 }
-
-type MutableNode = TypeNode & Record<string, unknown>;
 
 function removeNode(root: TypeNode, id: NodeId): [TypeNode | null, TypeNode | null] {
   // returns [newRoot, extracted]
@@ -182,16 +180,11 @@ export function canDrop(root: TypeNode | null, draggedId: NodeId, target: SlotRe
 export function moveNode(root: TypeNode | null, draggedId: NodeId, target: SlotRef): TypeNode | null {
   if (!root) return null;
 
-  const isSameSlot = (t: SlotRef): boolean => {
-    if (t.kind === 'root') return root?.id === draggedId;
-    return false;
-  };
-
   const [afterRemove, extracted] = removeNode(root, draggedId);
   if (!extracted) return root;
 
   const adjustedTarget = adjustTargetIndex(target, draggedId, root, target);
-  const [newRoot, displaced] = insertAt(afterRemove, target, extracted);
+  const [newRoot, displaced] = insertAt(afterRemove, adjustedTarget, extracted);
 
   if (!displaced) return newRoot;
 
