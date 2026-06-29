@@ -18,6 +18,10 @@ interface Props {
   onBaseRowsChange: (rows: BaseRow[]) => void;
   onNodeUpdate: (id: NodeId, updater: (node: TypeNode) => TypeNode) => void;
   outputResult?: { displayString: string; errors: string[] };
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 function RootDropZone({ onSet, refNames }: { onSet: (n: TypeNode) => void; refNames: string[] }) {
@@ -69,7 +73,7 @@ function updateNodeInTree(root: TypeNode | null, id: NodeId, updater: (node: Typ
   return update(root);
 }
 
-export default function SandboxPanel({ typeResult, root, onRootChange, baseRows, onBaseRowsChange, onNodeUpdate, outputResult }: Props) {
+export default function SandboxPanel({ typeResult, root, onRootChange, baseRows, onBaseRowsChange, onNodeUpdate, outputResult, onUndo, onRedo, canUndo, canRedo }: Props) {
   const refNames = ['T'];
 
   return (
@@ -80,14 +84,32 @@ export default function SandboxPanel({ typeResult, root, onRootChange, baseRows,
       <div className="flex-1">
         <div className="mb-3 flex items-center justify-between">
           <div className="text-sm font-semibold text-gray-700">型ツリー</div>
-          {root && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => onRootChange(null)}
-              className="text-xs text-gray-400 hover:text-red-400"
+              onClick={onUndo}
+              disabled={!canUndo}
+              title="元に戻す (Ctrl+Z)"
+              className="px-2 py-1 text-xs rounded border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              やり直す
+              ↩ Undo
             </button>
-          )}
+            <button
+              onClick={onRedo}
+              disabled={!canRedo}
+              title="やり直す (Ctrl+Shift+Z)"
+              className="px-2 py-1 text-xs rounded border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              ↪ Redo
+            </button>
+            {root && (
+              <button
+                onClick={() => onRootChange(null)}
+                className="text-xs text-gray-400 hover:text-red-400"
+              >
+                全リセット
+              </button>
+            )}
+          </div>
         </div>
         <TreeDndContext root={root} onRootChange={onRootChange} typeResult={typeResult} onNodeUpdate={onNodeUpdate} refNames={refNames}>
           {root ? (
