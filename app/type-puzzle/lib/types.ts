@@ -1,7 +1,7 @@
 export type NodeId = string;
 
 export type NodeKind =
-  | 'object' | 'primitive' | 'literal' | 'union' | 'tuple' | 'array'
+  | 'object' | 'primitive' | 'literal' | 'union' | 'intersection' | 'tuple' | 'array'
   | 'keyof' | 'indexedAccess' | 'mappedType' | 'conditional' | 'infer' | 'templateLiteral'
   | 'ref';
 
@@ -10,6 +10,7 @@ export type TypeNode =
   | { id: NodeId; kind: 'primitive'; name: 'string' | 'number' | 'boolean' | 'never' | 'any' | 'unknown' }
   | { id: NodeId; kind: 'literal'; value: string | number | boolean }
   | { id: NodeId; kind: 'union'; members: TypeNode[] }
+  | { id: NodeId; kind: 'intersection'; members: TypeNode[] }
   | { id: NodeId; kind: 'tuple'; elements: TypeNode[] }
   | { id: NodeId; kind: 'array'; element: TypeNode }
   | { id: NodeId; kind: 'keyof'; target: TypeNode }

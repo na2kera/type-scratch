@@ -22,6 +22,8 @@ export function renderExpression(node: TypeNode, visit: (n: TypeNode) => string)
     }
     case 'union':
       return node.members.map(visit).join(' | ');
+    case 'intersection':
+      return node.members.map(visit).join(' & ');
     case 'tuple':
       return `[${node.elements.map(visit).join(', ')}]`;
     case 'array':
@@ -54,6 +56,7 @@ export function walkChildren(node: TypeNode, fn: (child: TypeNode) => void): voi
   switch (node.kind) {
     case 'object': node.props.forEach(p => fn(p.value)); break;
     case 'union': node.members.forEach(fn); break;
+    case 'intersection': node.members.forEach(fn); break;
     case 'tuple': node.elements.forEach(fn); break;
     case 'array': fn(node.element); break;
     case 'keyof': fn(node.target); break;
@@ -68,6 +71,7 @@ export function mapChildren(node: TypeNode, fn: (child: TypeNode) => TypeNode): 
   switch (node.kind) {
     case 'object': return { ...node, props: node.props.map(p => ({ ...p, value: fn(p.value) })) };
     case 'union': return { ...node, members: node.members.map(fn) };
+    case 'intersection': return { ...node, members: node.members.map(fn) };
     case 'tuple': return { ...node, elements: node.elements.map(fn) };
     case 'array': return { ...node, element: fn(node.element) };
     case 'keyof': return { ...node, target: fn(node.target) };

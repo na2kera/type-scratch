@@ -6,6 +6,7 @@ export function findNode(root: TypeNode, id: NodeId): TypeNode | null {
   switch (root.kind) {
     case 'object': for (const p of root.props) { const r = findNode(p.value, id); if (r) return r; } break;
     case 'union': for (const m of root.members) { const r = findNode(m, id); if (r) return r; } break;
+    case 'intersection': for (const m of root.members) { const r = findNode(m, id); if (r) return r; } break;
     case 'tuple': for (const e of root.elements) { const r = findNode(e, id); if (r) return r; } break;
     case 'array': return findNode(root.element, id);
     case 'keyof': return findNode(root.target, id);
@@ -42,6 +43,13 @@ function removeNode(root: TypeNode, id: NodeId): [TypeNode | null, TypeNode | nu
         return { ...node, props: newProps as typeof node.props };
       }
       case 'union': {
+        const members = node.members.map(m => {
+          if (m.id === id) { extracted = m; return null; }
+          return remove(m) ?? m;
+        }).filter((m): m is TypeNode => m !== null);
+        return { ...node, members };
+      }
+      case 'intersection': {
         const members = node.members.map(m => {
           if (m.id === id) { extracted = m; return null; }
           return remove(m) ?? m;
@@ -122,7 +130,7 @@ function insertAt(root: TypeNode | null, target: SlotRef, node: TypeNode): [Type
     }
     if ((target.kind === 'list' || target.kind === 'listAppend') && n.id === target.parentId) {
       const slot = target.slot;
-      if (n.kind === 'union' && slot === 'members') {
+      if ((n.kind === 'union' || n.kind === 'intersection') && slot === 'members') {
         const arr = [...n.members];
         if (target.kind === 'listAppend') arr.push(node);
         else arr.splice(target.index, 0, node);
@@ -192,7 +200,7 @@ function adjustTargetIndex(target: SlotRef, draggedId: NodeId, root: TypeNode, _
   if (!parentNode) return target;
 
   let originalIndex = -1;
-  if (parentNode.kind === 'union' && target.slot === 'members') {
+  if ((parentNode.kind === 'union' || parentNode.kind === 'intersection') && target.slot === 'members') {
     originalIndex = parentNode.members.findIndex(m => m.id === draggedId);
   } else if (parentNode.kind === 'tuple' && target.slot === 'elements') {
     originalIndex = parentNode.elements.findIndex(e => e.id === draggedId);
@@ -214,7 +222,8 @@ function findParentSlot(root: TypeNode, childId: NodeId): SlotRef | null {
         }
         break;
       }
-      case 'union': {
+      case 'union':
+      case 'intersection': {
         for (let i = 0; i < node.members.length; i++) {
           if (node.members[i].id === childId) return { kind: 'list', parentId: node.id, slot: 'members', index: i };
           const r = search(node.members[i]); if (r) return r;

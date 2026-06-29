@@ -126,6 +126,7 @@ const KIND_COLORS: Record<string, string> = {
   primitive: 'bg-green-50 border-green-200',
   literal: 'bg-lime-50 border-lime-200',
   union: 'bg-purple-50 border-purple-200',
+  intersection: 'bg-fuchsia-50 border-fuchsia-200',
   tuple: 'bg-indigo-50 border-indigo-200',
   array: 'bg-cyan-50 border-cyan-200',
   keyof: 'bg-sky-50 border-sky-200',
@@ -278,6 +279,39 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
                       undefined,
                       () => onNodeUpdate(node.id, cur => {
                         if (cur.kind !== 'union') return cur;
+                        return { ...cur, members: cur.members.filter((_, j) => j !== i) };
+                      })
+                    )}
+                  />
+                </div>
+              ))}
+              <Slot
+                {...makeSlotProps(
+                  { kind: 'listAppend', parentId: node.id, slot: 'members' },
+                  null,
+                  undefined,
+                  undefined
+                )}
+              />
+            </div>
+          </div>
+        );
+
+      case 'intersection':
+        return (
+          <div>
+            <div className="text-xs font-semibold text-fuchsia-700 mb-1">Intersection (&)</div>
+            <div className="ml-2 flex flex-wrap gap-1 items-center">
+              {node.members.map((m, i) => (
+                <div key={m.id} className="flex items-center gap-1">
+                  {i > 0 && <span className="text-fuchsia-400 font-bold">&</span>}
+                  <Slot
+                    {...makeSlotProps(
+                      { kind: 'list', parentId: node.id, slot: 'members', index: i },
+                      m,
+                      undefined,
+                      () => onNodeUpdate(node.id, cur => {
+                        if (cur.kind !== 'intersection') return cur;
                         return { ...cur, members: cur.members.filter((_, j) => j !== i) };
                       })
                     )}

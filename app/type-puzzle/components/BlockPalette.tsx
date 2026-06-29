@@ -16,6 +16,7 @@ export const BLOCK_OPTIONS: { kind: NodeKind; label: string; description: string
   { kind: 'literal', label: 'Literal', description: '文字列・数値・真偽値リテラル' },
   { kind: 'object', label: 'Object', description: '{ key: Type }' },
   { kind: 'union', label: 'Union (|)', description: 'A | B | ...' },
+  { kind: 'intersection', label: 'Intersection (&)', description: 'A & B & ...' },
   { kind: 'tuple', label: 'Tuple', description: '[A, B, ...]' },
   { kind: 'array', label: 'Array (T[])', description: 'T[]' },
   { kind: 'keyof', label: 'keyof', description: 'keyof T' },
@@ -33,6 +34,7 @@ export function createDefaultNode(kind: NodeKind): TypeNode {
     case 'literal': return { id, kind: 'literal', value: 'value' };
     case 'object': return { id, kind: 'object', props: [] };
     case 'union': return { id, kind: 'union', members: [] };
+    case 'intersection': return { id, kind: 'intersection', members: [] };
     case 'tuple': return { id, kind: 'tuple', elements: [] };
     case 'array': return { id, kind: 'array', element: { id: newId(), kind: 'primitive', name: 'string' } };
     case 'keyof': return { id, kind: 'keyof', target: { id: newId(), kind: 'primitive', name: 'string' } };
