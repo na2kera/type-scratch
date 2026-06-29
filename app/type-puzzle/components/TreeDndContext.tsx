@@ -2,7 +2,7 @@
 
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useMemo, useState } from 'react';
-import { TypeNode, NodeId, NodeKind, SlotRef } from '../lib/types';
+import { TypeNode, NodeId, NodeKind, SlotRef, TypeResultMap } from '../lib/types';
 import { canDrop, findNode, moveNode, placeNode, deserializeSlotRef } from '../lib/tree-ops';
 import { newId } from '../lib/nodes';
 import NodeCard from './NodeCard';
@@ -13,7 +13,7 @@ interface Props {
   root: TypeNode | null;
   children: React.ReactNode;
   onRootChange: (root: TypeNode | null) => void;
-  typeResult?: Record<string, { displayString: string; errors: string[] }>;
+  typeResult?: TypeResultMap;
   onNodeUpdate: (id: NodeId, updater: (node: TypeNode) => TypeNode) => void;
   refNames?: string[];
 }

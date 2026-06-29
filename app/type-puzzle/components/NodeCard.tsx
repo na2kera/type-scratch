@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-import { TypeNode, NodeId, SlotRef } from '../lib/types';
+import { TypeNode, NodeId, SlotRef, TypeResultMap } from '../lib/types';
 import { newId, collectInferNamesInExtends } from '../lib/nodes';
 import { serializeSlotRef } from '../lib/tree-ops';
 import BlockPalette from './BlockPalette';
@@ -18,7 +18,7 @@ interface SlotProps {
   inferNames?: string[];
   refNames?: string[];
   insideExtends?: boolean;
-  typeResult?: Record<string, { displayString: string; errors: string[] }>;
+  typeResult?: TypeResultMap;
   onNodeUpdate: (id: NodeId, updater: (node: TypeNode) => TypeNode) => void;
 }
 
@@ -115,7 +115,7 @@ interface NodeCardProps {
   inferNames?: string[];
   refNames?: string[];
   insideExtends?: boolean;
-  typeResult?: Record<string, { displayString: string; errors: string[] }>;
+  typeResult?: TypeResultMap;
   onNodeUpdate: (id: NodeId, updater: (node: TypeNode) => TypeNode) => void;
   onSet?: (node: TypeNode) => void;
   isRoot?: boolean;
@@ -169,7 +169,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
     return cur;
   }
 
-  const cardStyle = `relative border rounded-lg p-2 mb-1 ${colorClass} ${isDragging ? 'opacity-40' : ''}`;
+  const cardStyle = `relative border rounded-lg p-2 mb-1 ${colorClass}`;
 
   function renderContent() {
     switch (node.kind) {

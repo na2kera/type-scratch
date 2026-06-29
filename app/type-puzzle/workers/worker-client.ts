@@ -25,6 +25,11 @@ function getWorker(): Worker {
     };
     worker.onerror = (e) => {
       console.error('Worker error', e);
+      for (const [, { reject }] of pending) {
+        reject(new Error('Worker error: ' + e.message));
+      }
+      pending.clear();
+      worker = null;
     };
   }
   return worker;
