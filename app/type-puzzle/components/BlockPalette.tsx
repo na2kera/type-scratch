@@ -52,7 +52,7 @@ export function createDefaultNode(kind: NodeKind): TypeNode {
       check: { id: newId(), kind: 'primitive', name: 'string' },
       extends: { id: newId(), kind: 'primitive', name: 'string' },
       trueBranch: { id: newId(), kind: 'primitive', name: 'string' },
-      falseBranch: { id: newId(), kind: 'primitive', name: 'never' as unknown as 'string' },
+      falseBranch: { id: newId(), kind: 'primitive', name: 'never' },
     };
     case 'infer': return { id, kind: 'infer', name: 'R' };
     case 'templateLiteral': return { id, kind: 'templateLiteral', parts: [''] };

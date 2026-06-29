@@ -42,9 +42,7 @@ export type SlotRef =
   | { kind: 'list'; parentId: NodeId; slot: 'members' | 'elements' | 'props' | 'parts'; index: number }
   | { kind: 'listAppend'; parentId: NodeId; slot: 'members' | 'elements' | 'props' | 'parts' };
 
-export type WorkerRequest =
-  | { type: 'evaluate'; source: string; requestId: number }
-  | { type: 'check'; source: string; requestId: number };
+export type WorkerRequest = { type: 'evaluate'; source: string; requestId: number };
 
 export type WorkerResponse =
   | { type: 'result'; requestId: number; displayString: string; errors: string[]; nodeResults: Record<string, string> }

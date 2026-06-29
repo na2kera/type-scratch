@@ -54,11 +54,7 @@ export default function TypePuzzleApp() {
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const currentRoot = mode === 'sandbox' ? sandbox.present : puzzle.present;
-  const currentUndo = mode === 'sandbox' ? sandbox.undo : puzzle.undo;
-  const currentRedo = mode === 'sandbox' ? sandbox.redo : puzzle.redo;
-  const canUndo = mode === 'sandbox' ? sandbox.canUndo : puzzle.canUndo;
-  const canRedo = mode === 'sandbox' ? sandbox.canRedo : puzzle.canRedo;
+  const current = mode === 'sandbox' ? sandbox : puzzle;
 
   function setCurrentRoot(root: TypeNode | null) {
     if (mode === 'sandbox') {
@@ -108,27 +104,27 @@ export default function TypePuzzleApp() {
       if (!(e.ctrlKey || e.metaKey)) return;
       if (e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
-        currentUndo();
+        current.undo();
       } else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
         e.preventDefault();
-        currentRedo();
+        current.redo();
       }
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [currentUndo, currentRedo]);
+  }, [current.undo, current.redo]);
 
   // Debounced evaluation
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
-      if (!currentRoot) {
+      if (!current.present) {
         setTypeResult({});
         setOutputResult(undefined);
         return;
       }
       try {
-        const source = generateSource(getBaseTypeSource(), currentRoot);
+        const source = generateSource(getBaseTypeSource(), current.present);
         const result = await evaluateType(source);
         setOutputResult(result);
 
@@ -136,7 +132,7 @@ export default function TypePuzzleApp() {
         for (const [nodeId, displayString] of Object.entries(result.nodeResults)) {
           newTypeResult[nodeId] = { displayString, errors: [] };
         }
-        newTypeResult[currentRoot.id] = { displayString: result.displayString, errors: result.errors };
+        newTypeResult[current.present.id] = { displayString: result.displayString, errors: result.errors };
         setTypeResult(newTypeResult);
       } catch (e) {
         console.error('Evaluation error:', e);
@@ -144,7 +140,7 @@ export default function TypePuzzleApp() {
     }, 300);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentRoot, baseRows, mode, currentPuzzleId]);
+  }, [current.present, baseRows, mode, currentPuzzleId]);
 
   async function handleJudge(): Promise<boolean> {
     const root = puzzle.present;
@@ -184,10 +180,10 @@ export default function TypePuzzleApp() {
             onBaseRowsChange={setBaseRows}
             onNodeUpdate={handleNodeUpdate}
             outputResult={outputResult}
-            onUndo={sandbox.undo}
-            onRedo={sandbox.redo}
-            canUndo={sandbox.canUndo}
-            canRedo={sandbox.canRedo}
+            onUndo={current.undo}
+            onRedo={current.redo}
+            canUndo={current.canUndo}
+            canRedo={current.canRedo}
           />
         ) : (
           <PuzzlePanel
@@ -199,10 +195,10 @@ export default function TypePuzzleApp() {
             onNodeUpdate={handleNodeUpdate}
             onJudge={handleJudge}
             judgeResult={judgeResult}
-            onUndo={puzzle.undo}
-            onRedo={puzzle.redo}
-            canUndo={puzzle.canUndo}
-            canRedo={puzzle.canRedo}
+            onUndo={current.undo}
+            onRedo={current.redo}
+            canUndo={current.canUndo}
+            canRedo={current.canRedo}
           />
         )}
       </main>

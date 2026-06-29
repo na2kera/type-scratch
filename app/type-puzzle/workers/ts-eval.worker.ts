@@ -8,18 +8,7 @@ const compilerOptions: ts.CompilerOptions = {
   skipLibCheck: true,
 };
 
-let envPromise: Promise<ReturnType<typeof createVirtualTypeScriptEnvironment>> | null = null;
 let fsMap: Map<string, string> | null = null;
-
-async function getEnv(source: string) {
-  if (!fsMap) {
-    fsMap = await createDefaultMapFromCDN(compilerOptions, ts.version, true, ts);
-  }
-  fsMap.set('index.ts', source);
-  const system = createSystem(fsMap);
-  return createVirtualTypeScriptEnvironment(system, ['index.ts'], ts, compilerOptions);
-}
-
 let cachedEnv: ReturnType<typeof createVirtualTypeScriptEnvironment> | null = null;
 
 async function evaluate(source: string): Promise<{ displayString: string; errors: string[]; nodeResults: Record<string, string> }> {
