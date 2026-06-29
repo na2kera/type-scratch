@@ -280,6 +280,12 @@ function findParentSlot(root: TypeNode, childId: NodeId): SlotRef | null {
   return search(root);
 }
 
+export function deleteNode(root: TypeNode | null, id: NodeId): TypeNode | null {
+  if (!root) return null;
+  const [newRoot] = removeNode(root, id);
+  return newRoot;
+}
+
 /** パレットからの新規ノードをスロットに配置する。既存ノードは上書き(破棄)。 */
 export function placeNode(root: TypeNode | null, target: SlotRef, node: TypeNode): TypeNode | null {
   if (target.kind === 'root') return node;

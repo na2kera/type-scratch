@@ -3,11 +3,12 @@
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useMemo, useState } from 'react';
 import { TypeNode, NodeId, NodeKind, SlotRef, TypeResultMap } from '../lib/types';
-import { canDrop, findNode, moveNode, placeNode, deserializeSlotRef } from '../lib/tree-ops';
+import { canDrop, findNode, moveNode, placeNode, deleteNode, deserializeSlotRef } from '../lib/tree-ops';
 import { newId } from '../lib/nodes';
 import NodeCard from './NodeCard';
 import { createDefaultNode, BLOCK_OPTIONS } from './BlockPalette';
 import { DragStateContext, DropValidity } from './DragStateContext';
+import TrashDropZone, { TRASH_DROPPABLE_ID } from './TrashDropZone';
 
 interface Props {
   root: TypeNode | null;
@@ -55,6 +56,12 @@ export default function TreeDndContext({ root, children, onRootChange, typeResul
     const { over } = e;
     if (!over || !prevActive) return;
 
+    // trash drop — remove the node
+    if (over.id === TRASH_DROPPABLE_ID && prevActive.source === 'tree') {
+      onRootChange(deleteNode(root, prevActive.id));
+      return;
+    }
+
     let targetSlot;
     try {
       targetSlot = deserializeSlotRef(over.id as string);
@@ -86,6 +93,7 @@ export default function TreeDndContext({ root, children, onRootChange, typeResul
 
   const dragContextValue = useMemo(() => ({
     isDragging: active !== null,
+    isDraggingFromTree: active?.source === 'tree',
     checkValidity: (slotRef: SlotRef, hasNode: boolean): DropValidity => {
       if (!active) return 'inactive';
       if (active.source === 'tree') {
@@ -102,6 +110,7 @@ export default function TreeDndContext({ root, children, onRootChange, typeResul
     <DragStateContext.Provider value={dragContextValue}>
     <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
       {children}
+      <TrashDropZone />
       <DragOverlay dropAnimation={null}>
         {active?.source === 'tree' && activeTreeNode && (
           <div className="opacity-80 pointer-events-none">
