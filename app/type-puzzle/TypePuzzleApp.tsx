@@ -7,6 +7,7 @@ import { generateSource, generateCheckSource } from './lib/codegen';
 import { puzzles } from './lib/puzzles';
 import { evaluateType } from './workers/worker-client';
 import { useUndoable } from './lib/useUndoable';
+import { useProgress } from './lib/useProgress';
 import ModeToggle from './components/ModeToggle';
 import SandboxPanel from './components/SandboxPanel';
 import PuzzlePanel from './components/PuzzlePanel';
@@ -34,6 +35,7 @@ export default function TypePuzzleApp() {
   const puzzle = useUndoable<TypeNode | null>(null);
   const [currentPuzzleId, setCurrentPuzzleId] = useState(puzzles[0].id);
   const [judgeResult, setJudgeResult] = useState<boolean | null>(null);
+  const { solved, markSolved } = useProgress();
   // puzzle tree を切り替え時に保持するためのマップ
   const puzzleRootsRef = useRef<Record<string, TypeNode | null>>({});
 
@@ -140,6 +142,7 @@ export default function TypePuzzleApp() {
       const result = await evaluateType(source);
       const passed = result.errors.length === 0;
       setJudgeResult(passed);
+      if (passed) markSolved(currentPuzzleId);
       return passed;
     } catch {
       setJudgeResult(false);
@@ -184,6 +187,7 @@ export default function TypePuzzleApp() {
             onNodeUpdate={handleNodeUpdate}
             onJudge={handleJudge}
             judgeResult={judgeResult}
+            solved={solved}
             onUndo={current.undo}
             onRedo={current.redo}
             canUndo={current.canUndo}

@@ -17,13 +17,14 @@ interface Props {
   onNodeUpdate: (id: NodeId, updater: (node: TypeNode) => TypeNode) => void;
   onJudge: () => Promise<boolean>;
   judgeResult: boolean | null;
+  solved: Set<string>;
   onUndo: () => void;
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
 }
 
-export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuzzleId, onPuzzleChange, onNodeUpdate, onJudge, judgeResult, onUndo, onRedo, canUndo, canRedo }: Props) {
+export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuzzleId, onPuzzleChange, onNodeUpdate, onJudge, judgeResult, solved, onUndo, onRedo, canUndo, canRedo }: Props) {
   const [judging, setJudging] = useState(false);
   const puzzle = puzzles.find(p => p.id === currentPuzzleId) ?? puzzles[0];
   const refNames = ['User'];
@@ -42,9 +43,12 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
           <button
             key={p.id}
             onClick={() => onPuzzleChange(p.id)}
-            className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${p.id === currentPuzzleId ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 ${p.id === currentPuzzleId ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
           >
             {p.title}
+            {solved.has(p.id) && (
+              <span className="text-green-500 text-xs">✓</span>
+            )}
           </button>
         ))}
       </div>
