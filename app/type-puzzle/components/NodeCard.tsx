@@ -592,9 +592,28 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
         </div>
       </div>
       {!insideExtends && result && (
-        <div className={`mt-1 text-xs font-mono rounded px-1 py-0.5 ${result.errors.length > 0 ? 'bg-red-50 text-red-600' : 'bg-white text-gray-600 border border-gray-100'}`}>
-          {result.errors.length > 0 ? result.errors[0].split('\n')[0] : `→ ${result.displayString}`}
-        </div>
+        result.errors.length > 0 ? (
+          <div className="relative group mt-1">
+            <div className="flex items-center gap-1 text-xs font-mono rounded px-1 py-0.5 bg-red-50 text-red-500 cursor-help">
+              <span className="font-bold shrink-0 text-red-600">!</span>
+              <span className="truncate">{result.errors[0].split('\n')[0]}</span>
+            </div>
+            <div className="absolute left-0 top-full mt-1 z-50 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-150 w-80 max-h-48 overflow-y-auto bg-gray-900 text-red-300 text-xs font-mono rounded-lg p-3 shadow-xl whitespace-pre-wrap break-all pointer-events-none">
+              {result.errors.join('\n\n')}
+            </div>
+          </div>
+        ) : (
+          <div className="relative group mt-1">
+            <div className="text-xs font-mono rounded px-1 py-0.5 bg-white text-gray-500 border border-gray-100 truncate cursor-default">
+              <span className="text-gray-400">→</span> {result.displayString}
+            </div>
+            {result.displayString.length > 30 && (
+              <div className="absolute left-0 top-full mt-1 z-50 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-150 w-80 max-h-48 overflow-y-auto bg-gray-900 text-green-300 text-xs font-mono rounded-lg p-3 shadow-xl whitespace-pre-wrap break-all pointer-events-none">
+                {result.displayString}
+              </div>
+            )}
+          </div>
+        )
       )}
     </div>
   );
