@@ -50,44 +50,38 @@ export function renderExpression(node: TypeNode, visit: (n: TypeNode) => string)
   }
 }
 
+export function walkChildren(node: TypeNode, fn: (child: TypeNode) => void): void {
+  switch (node.kind) {
+    case 'object': node.props.forEach(p => fn(p.value)); break;
+    case 'union': node.members.forEach(fn); break;
+    case 'tuple': node.elements.forEach(fn); break;
+    case 'array': fn(node.element); break;
+    case 'keyof': fn(node.target); break;
+    case 'indexedAccess': fn(node.target); fn(node.key); break;
+    case 'mappedType': fn(node.keys); fn(node.source); break;
+    case 'conditional': fn(node.check); fn(node.extends); fn(node.trueBranch); fn(node.falseBranch); break;
+    case 'templateLiteral': node.parts.forEach(p => { if (typeof p !== 'string') fn(p); }); break;
+  }
+}
+
+export function mapChildren(node: TypeNode, fn: (child: TypeNode) => TypeNode): TypeNode {
+  switch (node.kind) {
+    case 'object': return { ...node, props: node.props.map(p => ({ ...p, value: fn(p.value) })) };
+    case 'union': return { ...node, members: node.members.map(fn) };
+    case 'tuple': return { ...node, elements: node.elements.map(fn) };
+    case 'array': return { ...node, element: fn(node.element) };
+    case 'keyof': return { ...node, target: fn(node.target) };
+    case 'indexedAccess': return { ...node, target: fn(node.target), key: fn(node.key) };
+    case 'mappedType': return { ...node, keys: fn(node.keys), source: fn(node.source) };
+    case 'conditional': return { ...node, check: fn(node.check), extends: fn(node.extends), trueBranch: fn(node.trueBranch), falseBranch: fn(node.falseBranch) };
+    case 'templateLiteral': return { ...node, parts: node.parts.map(p => typeof p === 'string' ? p : fn(p)) };
+  }
+  return node;
+}
+
 export function getAllIds(node: TypeNode): Set<NodeId> {
   const ids = new Set<NodeId>([node.id]);
-  switch (node.kind) {
-    case 'object':
-      node.props.forEach(p => getAllIds(p.value).forEach(id => ids.add(id)));
-      break;
-    case 'union':
-      node.members.forEach(m => getAllIds(m).forEach(id => ids.add(id)));
-      break;
-    case 'tuple':
-      node.elements.forEach(e => getAllIds(e).forEach(id => ids.add(id)));
-      break;
-    case 'array':
-      getAllIds(node.element).forEach(id => ids.add(id));
-      break;
-    case 'keyof':
-      getAllIds(node.target).forEach(id => ids.add(id));
-      break;
-    case 'indexedAccess':
-      getAllIds(node.target).forEach(id => ids.add(id));
-      getAllIds(node.key).forEach(id => ids.add(id));
-      break;
-    case 'mappedType':
-      getAllIds(node.keys).forEach(id => ids.add(id));
-      getAllIds(node.source).forEach(id => ids.add(id));
-      break;
-    case 'conditional':
-      getAllIds(node.check).forEach(id => ids.add(id));
-      getAllIds(node.extends).forEach(id => ids.add(id));
-      getAllIds(node.trueBranch).forEach(id => ids.add(id));
-      getAllIds(node.falseBranch).forEach(id => ids.add(id));
-      break;
-    case 'templateLiteral':
-      node.parts.forEach(p => {
-        if (typeof p !== 'string') getAllIds(p).forEach(id => ids.add(id));
-      });
-      break;
-  }
+  walkChildren(node, child => getAllIds(child).forEach(id => ids.add(id)));
   return ids;
 }
 
@@ -95,13 +89,7 @@ export function collectInferNamesInExtends(node: TypeNode): string[] {
   const names: string[] = [];
   function walk(n: TypeNode) {
     if (n.kind === 'infer') { names.push(n.name); return; }
-    switch (n.kind) {
-      case 'union': n.members.forEach(walk); break;
-      case 'tuple': n.elements.forEach(walk); break;
-      case 'array': walk(n.element); break;
-      case 'object': n.props.forEach(p => walk(p.value)); break;
-      case 'templateLiteral': n.parts.forEach(p => { if (typeof p !== 'string') walk(p); }); break;
-    }
+    walkChildren(n, walk);
   }
   walk(node);
   return names;

@@ -1,5 +1,5 @@
 import { TypeNode, NodeId, SlotRef } from './types';
-import { getAllIds } from './nodes';
+import { getAllIds, mapChildren } from './nodes';
 
 export function findNode(root: TypeNode, id: NodeId): TypeNode | null {
   if (root.id === id) return root;
@@ -113,6 +113,7 @@ function insertAt(root: TypeNode | null, target: SlotRef, node: TypeNode): [Type
   let displaced: TypeNode | null = null;
 
   function insert(n: TypeNode): TypeNode {
+    if ((n as unknown) === null) return n;
     if (target.kind === 'single' && n.id === target.parentId) {
       const slot = target.slot;
       const existing = (n as unknown as Record<string, TypeNode>)[slot] as TypeNode | null;
@@ -147,19 +148,7 @@ function insertAt(root: TypeNode | null, target: SlotRef, node: TypeNode): [Type
         return { ...n, parts: arr };
       }
     }
-    // recurse
-    switch (n.kind) {
-      case 'object': return { ...n, props: n.props.map(p => ({ ...p, value: insert(p.value) })) };
-      case 'union': return { ...n, members: n.members.map(insert) };
-      case 'tuple': return { ...n, elements: n.elements.map(insert) };
-      case 'array': return { ...n, element: insert(n.element) };
-      case 'keyof': return { ...n, target: insert(n.target) };
-      case 'indexedAccess': return { ...n, target: insert(n.target), key: insert(n.key) };
-      case 'mappedType': return { ...n, keys: insert(n.keys), source: insert(n.source) };
-      case 'conditional': return { ...n, check: insert(n.check), extends: insert(n.extends), trueBranch: insert(n.trueBranch), falseBranch: insert(n.falseBranch) };
-      case 'templateLiteral': return { ...n, parts: n.parts.map(p => typeof p === 'string' ? p : insert(p)) };
-    }
-    return n;
+    return mapChildren(n, insert);
   }
 
   const newRoot = root ? insert(JSON.parse(JSON.stringify(root))) : null;

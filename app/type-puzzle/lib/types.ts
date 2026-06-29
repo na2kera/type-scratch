@@ -42,6 +42,9 @@ export type SlotRef =
   | { kind: 'list'; parentId: NodeId; slot: 'members' | 'elements' | 'props' | 'parts'; index: number }
   | { kind: 'listAppend'; parentId: NodeId; slot: 'members' | 'elements' | 'props' | 'parts' };
 
+export type NodeTypeResult = { displayString: string; errors: string[] };
+export type TypeResultMap = Record<string, NodeTypeResult>;
+
 export type WorkerRequest = { type: 'evaluate'; source: string; requestId: number };
 
 export type WorkerResponse =

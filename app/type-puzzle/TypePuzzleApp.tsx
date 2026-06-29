@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { TypeNode, NodeId, BaseRow } from './lib/types';
+import { TypeNode, NodeId, BaseRow, TypeResultMap, NodeTypeResult } from './lib/types';
+import { mapChildren } from './lib/nodes';
 import { generateSource, generateCheckSource } from './lib/codegen';
 import { puzzles } from './lib/puzzles';
 import { evaluateType } from './workers/worker-client';
@@ -12,21 +13,9 @@ import PuzzlePanel from './components/PuzzlePanel';
 
 function updateNodeInTree(root: TypeNode | null, id: NodeId, updater: (node: TypeNode) => TypeNode): TypeNode | null {
   if (!root) return null;
-  if (root.id === id) return updater(root);
   function update(node: TypeNode): TypeNode {
     if (node.id === id) return updater(node);
-    switch (node.kind) {
-      case 'object': return { ...node, props: node.props.map(p => ({ ...p, value: update(p.value) })) };
-      case 'union': return { ...node, members: node.members.map(update) };
-      case 'tuple': return { ...node, elements: node.elements.map(update) };
-      case 'array': return { ...node, element: update(node.element) };
-      case 'keyof': return { ...node, target: update(node.target) };
-      case 'indexedAccess': return { ...node, target: update(node.target), key: update(node.key) };
-      case 'mappedType': return { ...node, keys: update(node.keys), source: update(node.source) };
-      case 'conditional': return { ...node, check: update(node.check), extends: update(node.extends), trueBranch: update(node.trueBranch), falseBranch: update(node.falseBranch) };
-      case 'templateLiteral': return { ...node, parts: node.parts.map(p => typeof p === 'string' ? p : update(p)) };
-    }
-    return node;
+    return mapChildren(node, update);
   }
   return update(root);
 }
@@ -49,20 +38,24 @@ export default function TypePuzzleApp() {
   const puzzleRootsRef = useRef<Record<string, TypeNode | null>>({});
 
   // Type evaluation results
-  const [typeResult, setTypeResult] = useState<Record<string, { displayString: string; errors: string[] }>>({});
-  const [outputResult, setOutputResult] = useState<{ displayString: string; errors: string[] } | undefined>(undefined);
+  const [typeResult, setTypeResult] = useState<TypeResultMap>({});
+  const [outputResult, setOutputResult] = useState<NodeTypeResult | undefined>(undefined);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const current = mode === 'sandbox' ? sandbox : puzzle;
 
+  function applyPuzzleRoot(root: TypeNode | null) {
+    puzzle.set(root);
+    puzzleRootsRef.current[currentPuzzleId] = root;
+    setJudgeResult(null);
+  }
+
   function setCurrentRoot(root: TypeNode | null) {
     if (mode === 'sandbox') {
       sandbox.set(root);
     } else {
-      puzzle.set(root);
-      puzzleRootsRef.current[currentPuzzleId] = root;
-      setJudgeResult(null);
+      applyPuzzleRoot(root);
     }
   }
 
@@ -78,13 +71,9 @@ export default function TypePuzzleApp() {
 
   const handleNodeUpdate = useCallback((id: NodeId, updater: (node: TypeNode) => TypeNode) => {
     if (mode === 'sandbox') {
-      const next = updateNodeInTree(sandbox.present, id, updater);
-      sandbox.set(next);
+      sandbox.set(updateNodeInTree(sandbox.present, id, updater));
     } else {
-      const next = updateNodeInTree(puzzle.present, id, updater);
-      puzzle.set(next);
-      puzzleRootsRef.current[currentPuzzleId] = next;
-      setJudgeResult(null);
+      applyPuzzleRoot(updateNodeInTree(puzzle.present, id, updater));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, currentPuzzleId, sandbox.present, puzzle.present]);
@@ -128,7 +117,7 @@ export default function TypePuzzleApp() {
         const result = await evaluateType(source);
         setOutputResult(result);
 
-        const newTypeResult: Record<string, { displayString: string; errors: string[] }> = {};
+        const newTypeResult: TypeResultMap = {};
         for (const [nodeId, displayString] of Object.entries(result.nodeResults)) {
           newTypeResult[nodeId] = { displayString, errors: [] };
         }
