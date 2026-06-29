@@ -2,7 +2,8 @@
 
 import { WorkerRequest, WorkerResponse } from '../lib/types';
 
-type Resolver = { resolve: (v: { displayString: string; errors: string[] }) => void; reject: (e: Error) => void };
+type EvalResult = { displayString: string; errors: string[]; nodeResults: Record<string, string> };
+type Resolver = { resolve: (v: EvalResult) => void; reject: (e: Error) => void };
 
 let worker: Worker | null = null;
 let requestId = 0;
@@ -17,7 +18,7 @@ function getWorker(): Worker {
       if (!p) return;
       pending.delete(res.requestId);
       if (res.type === 'result') {
-        p.resolve({ displayString: res.displayString, errors: res.errors });
+        p.resolve({ displayString: res.displayString, errors: res.errors, nodeResults: res.nodeResults });
       } else {
         p.reject(new Error(res.message));
       }
@@ -29,7 +30,7 @@ function getWorker(): Worker {
   return worker;
 }
 
-export function evaluateType(source: string): Promise<{ displayString: string; errors: string[] }> {
+export function evaluateType(source: string): Promise<EvalResult> {
   return new Promise((resolve, reject) => {
     const id = ++requestId;
     pending.set(id, { resolve, reject });

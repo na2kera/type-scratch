@@ -47,5 +47,5 @@ export type WorkerRequest =
   | { type: 'check'; source: string; requestId: number };
 
 export type WorkerResponse =
-  | { type: 'result'; requestId: number; displayString: string; errors: string[] }
+  | { type: 'result'; requestId: number; displayString: string; errors: string[]; nodeResults: Record<string, string> }
   | { type: 'error'; requestId: number; message: string };

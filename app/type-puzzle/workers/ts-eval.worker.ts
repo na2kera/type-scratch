@@ -22,7 +22,7 @@ async function getEnv(source: string) {
 
 let cachedEnv: ReturnType<typeof createVirtualTypeScriptEnvironment> | null = null;
 
-async function evaluate(source: string): Promise<{ displayString: string; errors: string[] }> {
+async function evaluate(source: string): Promise<{ displayString: string; errors: string[]; nodeResults: Record<string, string> }> {
   if (!fsMap) {
     fsMap = await createDefaultMapFromCDN(compilerOptions, ts.version, true, ts);
   }
@@ -45,17 +45,21 @@ async function evaluate(source: string): Promise<{ displayString: string; errors
   );
 
   let displayString = '(error)';
-  const statements = sourceFile.statements;
-  for (let i = statements.length - 1; i >= 0; i--) {
-    const stmt = statements[i];
-    if (ts.isTypeAliasDeclaration(stmt) && stmt.name.text === '__Output') {
-      const type = checker.getTypeAtLocation(stmt.name);
-      displayString = checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation);
-      break;
+  const nodeResults: Record<string, string> = {};
+
+  for (const stmt of sourceFile.statements) {
+    if (!ts.isTypeAliasDeclaration(stmt)) continue;
+    const name = stmt.name.text;
+    const type = checker.getTypeAtLocation(stmt.name);
+    const str = checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation);
+    if (name === '__Output') {
+      displayString = str;
+    } else if (name.startsWith('N_')) {
+      nodeResults[name.slice(2)] = str;
     }
   }
 
-  return { displayString, errors };
+  return { displayString, errors, nodeResults };
 }
 
 self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
@@ -67,6 +71,7 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
       requestId: req.requestId,
       displayString: result.displayString,
       errors: result.errors,
+      nodeResults: result.nodeResults,
     };
     self.postMessage(response);
   } catch (err) {
