@@ -7,18 +7,18 @@ interface Props {
 
 export default function ModeToggle({ mode, onChange }: Props) {
   return (
-    <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+    <div className="flex gap-0.5 bg-zinc-800 rounded-md p-0.5">
       <button
         onClick={() => onChange('sandbox')}
-        className={`px-4 py-2 text-sm font-medium transition-colors ${mode === 'sandbox' ? 'bg-blue-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+        className={`px-3 py-1.5 text-xs font-mono rounded transition-colors ${mode === 'sandbox' ? 'bg-zinc-600 text-zinc-100' : 'text-zinc-400 hover:text-zinc-200'}`}
       >
-        サンドボックス
+        sandbox
       </button>
       <button
         onClick={() => onChange('puzzle')}
-        className={`px-4 py-2 text-sm font-medium transition-colors ${mode === 'puzzle' ? 'bg-blue-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+        className={`px-3 py-1.5 text-xs font-mono rounded transition-colors ${mode === 'puzzle' ? 'bg-zinc-600 text-zinc-100' : 'text-zinc-400 hover:text-zinc-200'}`}
       >
-        パズル
+        puzzle
       </button>
     </div>
   );

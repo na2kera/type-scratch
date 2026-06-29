@@ -26,7 +26,7 @@ export default function BaseTypeEditor({ rows, onChange }: Props) {
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-3">
-      <div className="text-sm font-semibold text-gray-700 mb-2">ベースの型 T</div>
+      <div className="text-xs font-mono text-zinc-400 uppercase tracking-widest mb-2">base type T</div>
       <div className="font-mono text-xs text-gray-500 bg-gray-50 rounded p-2 mb-2">{preview}</div>
       <div className="space-y-1">
         {rows.map((row, i) => (
