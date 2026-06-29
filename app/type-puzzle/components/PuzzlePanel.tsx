@@ -18,6 +18,10 @@ interface Props {
   onNodeUpdate: (id: NodeId, updater: (node: TypeNode) => TypeNode) => void;
   onJudge: () => Promise<boolean>;
   judgeResult: boolean | null;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 function RootDropZone({ onSet, refNames }: { onSet: (n: TypeNode) => void; refNames: string[] }) {
@@ -46,7 +50,7 @@ function RootDropZone({ onSet, refNames }: { onSet: (n: TypeNode) => void; refNa
   );
 }
 
-export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuzzleId, onPuzzleChange, onNodeUpdate, onJudge, judgeResult }: Props) {
+export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuzzleId, onPuzzleChange, onNodeUpdate, onJudge, judgeResult, onUndo, onRedo, canUndo, canRedo }: Props) {
   const [judging, setJudging] = useState(false);
   const puzzle = puzzles.find(p => p.id === currentPuzzleId) ?? puzzles[0];
   const refNames = ['User'];
@@ -84,7 +88,25 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
       {/* ツリー */}
       <div className="mb-3 flex items-center justify-between">
         <div className="text-sm font-semibold text-gray-700">型ツリー</div>
-        <button onClick={() => onRootChange(null)} className="text-xs text-gray-400 hover:text-red-400">やり直す</button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onUndo}
+            disabled={!canUndo}
+            title="元に戻す (Ctrl+Z)"
+            className="px-2 py-1 text-xs rounded border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            ↩ Undo
+          </button>
+          <button
+            onClick={onRedo}
+            disabled={!canRedo}
+            title="やり直す (Ctrl+Shift+Z)"
+            className="px-2 py-1 text-xs rounded border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            ↪ Redo
+          </button>
+          <button onClick={() => onRootChange(null)} className="text-xs text-gray-400 hover:text-red-400">全リセット</button>
+        </div>
       </div>
 
       <TreeDndContext root={root} onRootChange={onRootChange} typeResult={typeResult} onNodeUpdate={onNodeUpdate} refNames={refNames}>
