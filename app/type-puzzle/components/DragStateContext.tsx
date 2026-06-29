@@ -7,11 +7,13 @@ export type DropValidity = 'valid-empty' | 'valid-swap' | 'invalid' | 'inactive'
 
 interface DragContextValue {
   isDragging: boolean;
+  isDraggingFromTree: boolean;
   checkValidity: (slotRef: SlotRef, hasNode: boolean) => DropValidity;
 }
 
 export const DragStateContext = createContext<DragContextValue>({
   isDragging: false,
+  isDraggingFromTree: false,
   checkValidity: () => 'inactive',
 });
 
