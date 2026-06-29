@@ -97,8 +97,15 @@ export default function TypePuzzleApp() {
         const source = generateSource(getBaseTypeSource(), currentRoot);
         const result = await evaluateType(source);
         setOutputResult(result);
-        // For now, set the same result for the root node
-        setTypeResult({ [currentRoot.id]: result });
+
+        // 各ノードの中間評価結果を展開
+        const newTypeResult: Record<string, { displayString: string; errors: string[] }> = {};
+        for (const [nodeId, displayString] of Object.entries(result.nodeResults)) {
+          newTypeResult[nodeId] = { displayString, errors: [] };
+        }
+        // ルートノードにはコンパイルエラーも付与
+        newTypeResult[currentRoot.id] = { displayString: result.displayString, errors: result.errors };
+        setTypeResult(newTypeResult);
       } catch (e) {
         console.error('Evaluation error:', e);
       }
