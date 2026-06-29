@@ -7,7 +7,7 @@ export type NodeKind =
 
 export type TypeNode =
   | { id: NodeId; kind: 'object'; props: { key: string; value: TypeNode; optional?: boolean }[] }
-  | { id: NodeId; kind: 'primitive'; name: 'string' | 'number' | 'boolean' }
+  | { id: NodeId; kind: 'primitive'; name: 'string' | 'number' | 'boolean' | 'never' | 'any' | 'unknown' }
   | { id: NodeId; kind: 'literal'; value: string | number | boolean }
   | { id: NodeId; kind: 'union'; members: TypeNode[] }
   | { id: NodeId; kind: 'tuple'; elements: TypeNode[] }
@@ -20,7 +20,7 @@ export type TypeNode =
   | { id: NodeId; kind: 'templateLiteral'; parts: Array<string | TypeNode> }
   | { id: NodeId; kind: 'ref'; name: string };
 
-export type PrimitiveTypeName = 'string' | 'number' | 'boolean';
+export type PrimitiveTypeName = 'string' | 'number' | 'boolean' | 'never' | 'any' | 'unknown';
 
 export interface BaseRow {
   key: string;
