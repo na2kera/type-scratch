@@ -64,7 +64,7 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
 
       {/* ツリー */}
       <div className="mb-3 flex items-center justify-between">
-        <div className="text-sm font-semibold text-gray-700">型ツリー</div>
+        <div className="text-xs font-mono text-zinc-400 uppercase tracking-widest">tree</div>
         <UndoControls
           onUndo={onUndo}
           onRedo={onRedo}

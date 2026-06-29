@@ -151,12 +151,12 @@ export default function TypePuzzleApp() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
+    <div className="min-h-screen bg-stone-50">
+      <header className="bg-zinc-900 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">TypeScript 型パズル</h1>
-            <p className="text-xs text-gray-500">ビジュアルビルダーで TypeScript の型を学ぼう</p>
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-mono text-zinc-400 border border-zinc-700 rounded px-1.5 py-0.5 leading-tight select-none">TS</span>
+            <h1 className="text-sm font-mono font-semibold text-zinc-100 tracking-tight">type-puzzle</h1>
           </div>
           <ModeToggle mode={mode} onChange={setMode} />
         </div>
