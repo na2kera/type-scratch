@@ -1,6 +1,6 @@
 'use client';
 
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useMemo, useState } from 'react';
 import { TypeNode, NodeId, NodeKind, SlotRef } from '../lib/types';
 import { canDrop, moveNode, placeNode, deserializeSlotRef } from '../lib/tree-ops';
@@ -26,7 +26,10 @@ type ActiveState =
 
 export default function TreeDndContext({ root, children, onRootChange, typeResult, onNodeUpdate, refNames = [] }: Props) {
   const [active, setActive] = useState<ActiveState>(null);
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+  );
 
   function findNode(id: NodeId): TypeNode | null {
     if (!root) return null;
