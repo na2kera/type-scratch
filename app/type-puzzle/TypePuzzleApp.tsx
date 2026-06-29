@@ -8,9 +8,11 @@ import { puzzles } from './lib/puzzles';
 import { evaluateType } from './workers/worker-client';
 import { useUndoable } from './lib/useUndoable';
 import { useProgress } from './lib/useProgress';
+import { useTutorial } from './lib/useTutorial';
 import ModeToggle from './components/ModeToggle';
 import SandboxPanel from './components/SandboxPanel';
 import PuzzlePanel from './components/PuzzlePanel';
+import Tutorial from './components/Tutorial';
 
 function updateNodeInTree(root: TypeNode | null, id: NodeId, updater: (node: TypeNode) => TypeNode): TypeNode | null {
   if (!root) return null;
@@ -36,6 +38,7 @@ export default function TypePuzzleApp() {
   const [currentPuzzleId, setCurrentPuzzleId] = useState(puzzles[0].id);
   const [judgeResult, setJudgeResult] = useState<boolean | null>(null);
   const { solved, markSolved } = useProgress();
+  const { show: showTutorial, dismiss: dismissTutorial, open: openTutorial } = useTutorial();
   // puzzle tree を切り替え時に保持するためのマップ
   const puzzleRootsRef = useRef<Record<string, TypeNode | null>>({});
 
@@ -152,13 +155,23 @@ export default function TypePuzzleApp() {
 
   return (
     <div className="min-h-screen bg-stone-50">
+      {showTutorial && <Tutorial onDismiss={dismissTutorial} />}
       <header className="bg-zinc-900 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <span className="text-xs font-mono text-zinc-400 border border-zinc-700 rounded px-1.5 py-0.5 leading-tight select-none">TS</span>
             <h1 className="text-sm font-mono font-semibold text-zinc-100 tracking-tight">type-puzzle</h1>
           </div>
-          <ModeToggle mode={mode} onChange={setMode} />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={openTutorial}
+              className="text-zinc-500 hover:text-zinc-300 text-xs font-mono transition-colors"
+              title="チュートリアルを表示"
+            >
+              ?
+            </button>
+            <ModeToggle mode={mode} onChange={setMode} />
+          </div>
         </div>
       </header>
 
