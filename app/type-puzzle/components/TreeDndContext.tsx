@@ -1,12 +1,13 @@
 'use client';
 
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { useState } from 'react';
-import { TypeNode, NodeId, NodeKind } from '../lib/types';
+import { useMemo, useState } from 'react';
+import { TypeNode, NodeId, NodeKind, SlotRef } from '../lib/types';
 import { canDrop, moveNode, placeNode, deserializeSlotRef } from '../lib/tree-ops';
 import { newId } from '../lib/nodes';
 import NodeCard from './NodeCard';
 import { createDefaultNode, BLOCK_OPTIONS } from './BlockPalette';
+import { DragStateContext, DropValidity } from './DragStateContext';
 
 interface Props {
   root: TypeNode | null;
@@ -100,7 +101,22 @@ export default function TreeDndContext({ root, children, onRootChange, typeResul
 
   const activeTreeNode = active?.source === 'tree' ? findNode(active.id) : null;
 
+  const dragContextValue = useMemo(() => ({
+    isDragging: active !== null,
+    checkValidity: (slotRef: SlotRef, hasNode: boolean): DropValidity => {
+      if (!active) return 'inactive';
+      if (active.source === 'tree') {
+        const valid = canDrop(root, active.id, slotRef);
+        if (!valid) return 'invalid';
+        return hasNode ? 'valid-swap' : 'valid-empty';
+      }
+      // palette drop — always valid, replaces existing
+      return hasNode ? 'valid-swap' : 'valid-empty';
+    },
+  }), [active, root]);
+
   return (
+    <DragStateContext.Provider value={dragContextValue}>
     <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
       {children}
       <DragOverlay dropAnimation={null}>
@@ -126,5 +142,6 @@ export default function TreeDndContext({ root, children, onRootChange, typeResul
         )}
       </DragOverlay>
     </DndContext>
+    </DragStateContext.Provider>
   );
 }

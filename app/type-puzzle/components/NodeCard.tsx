@@ -6,6 +6,7 @@ import { TypeNode, NodeId, SlotRef } from '../lib/types';
 import { newId, collectInferNamesInExtends } from '../lib/nodes';
 import { serializeSlotRef } from '../lib/tree-ops';
 import BlockPalette from './BlockPalette';
+import { useDragState } from './DragStateContext';
 
 interface SlotProps {
   slotRef: SlotRef;
@@ -27,10 +28,36 @@ function Slot({ slotRef, node, label, onSet, onRemove, rootNode, inferNames = []
   const slotId = serializeSlotRef(slotRef);
 
   const { isOver, setNodeRef: setDropRef } = useDroppable({ id: slotId });
+  const { isDragging, checkValidity } = useDragState();
+  const validity = isDragging ? checkValidity(slotRef, !!node) : 'inactive';
+
+  // クラスの計算
+  const wrapperClass = (() => {
+    if (!isDragging) return 'relative';
+    const base = 'relative rounded transition-all duration-150';
+    if (isOver) {
+      if (validity === 'valid-empty') return `${base} ring-2 ring-blue-500 bg-blue-50 shadow-[0_0_0_4px_rgba(59,130,246,0.15)]`;
+      if (validity === 'valid-swap') return `${base} ring-2 ring-amber-400 bg-amber-50 shadow-[0_0_0_4px_rgba(251,191,36,0.15)]`;
+      if (validity === 'invalid')   return `${base} ring-2 ring-red-400 bg-red-50`;
+    }
+    // ドラッグ中だがhoverしていない: 有効スロットをうっすら示す
+    if (validity === 'valid-empty' || validity === 'valid-swap') return `${base} ring-1 ring-blue-200`;
+    return base;
+  })();
 
   if (node) {
     return (
-      <div ref={setDropRef} className={`relative ${isOver ? 'ring-2 ring-blue-400 rounded' : ''}`}>
+      <div ref={setDropRef} className={wrapperClass}>
+        {isOver && validity === 'valid-swap' && (
+          <div className="absolute -top-4 left-0 z-10 text-xs text-amber-600 font-medium bg-amber-50 border border-amber-300 rounded px-1 py-0.5 whitespace-nowrap">
+            ↔ 入れ替え
+          </div>
+        )}
+        {isOver && validity === 'invalid' && (
+          <div className="absolute -top-4 left-0 z-10 text-xs text-red-600 bg-red-50 border border-red-300 rounded px-1 py-0.5 whitespace-nowrap">
+            × ドロップ不可
+          </div>
+        )}
         {label && <span className="text-xs text-gray-400 mr-1">{label}:</span>}
         <NodeCard
           node={node}
@@ -47,15 +74,24 @@ function Slot({ slotRef, node, label, onSet, onRemove, rootNode, inferNames = []
     );
   }
 
+  // 空スロット
+  const emptyButtonClass = (() => {
+    if (isOver && validity === 'valid-empty')
+      return 'px-2 py-1 text-xs border-2 border-blue-500 rounded text-blue-600 bg-blue-50 font-medium';
+    if (isDragging && (validity === 'valid-empty' || validity === 'valid-swap'))
+      return 'px-2 py-1 text-xs border border-dashed border-blue-300 rounded text-blue-400 bg-blue-50/50';
+    return 'px-2 py-1 text-xs border border-dashed border-gray-300 rounded text-gray-400 hover:border-blue-400 hover:text-blue-500 bg-gray-50';
+  })();
+
   return (
-    <div ref={setDropRef} className={`relative inline-block ${isOver ? 'ring-2 ring-blue-400 rounded' : ''}`}>
+    <div ref={setDropRef} className={`${wrapperClass} inline-block`}>
       {label && <span className="text-xs text-gray-400 mr-1">{label}:</span>}
       <div className="relative">
         <button
           onClick={() => setShowPalette(s => !s)}
-          className="px-2 py-1 text-xs border border-dashed border-gray-300 rounded text-gray-400 hover:border-blue-400 hover:text-blue-500 bg-gray-50"
+          className={emptyButtonClass}
         >
-          + ブロックを選ぶ
+          {isOver && validity === 'valid-empty' ? 'ここにドロップ' : '+ ブロックを選ぶ'}
         </button>
         {showPalette && (
           <div ref={paletteRef}>
