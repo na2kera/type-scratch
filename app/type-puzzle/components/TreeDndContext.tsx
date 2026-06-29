@@ -2,10 +2,11 @@
 
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useState } from 'react';
-import { TypeNode, NodeId } from '../lib/types';
-import { canDrop, moveNode, deserializeSlotRef } from '../lib/tree-ops';
+import { TypeNode, NodeId, NodeKind } from '../lib/types';
+import { canDrop, moveNode, placeNode, deserializeSlotRef } from '../lib/tree-ops';
+import { newId } from '../lib/nodes';
 import NodeCard from './NodeCard';
-import { getAllIds } from '../lib/nodes';
+import { createDefaultNode, BLOCK_OPTIONS } from './BlockPalette';
 
 interface Props {
   root: TypeNode | null;
@@ -16,8 +17,14 @@ interface Props {
   refNames?: string[];
 }
 
+type ActiveState =
+  | { source: 'tree'; id: NodeId }
+  | { source: 'palette'; kind: NodeKind; label: string }
+  | { source: 'palette-ref'; name: string; variant: 'ref' | 'infer' }
+  | null;
+
 export default function TreeDndContext({ root, children, onRootChange, typeResult, onNodeUpdate, refNames = [] }: Props) {
-  const [activeId, setActiveId] = useState<NodeId | null>(null);
+  const [active, setActive] = useState<ActiveState>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   function findNode(id: NodeId): TypeNode | null {
@@ -41,15 +48,29 @@ export default function TreeDndContext({ root, children, onRootChange, typeResul
   }
 
   function onDragStart(e: DragStartEvent) {
-    setActiveId(e.active.id as NodeId);
+    const id = e.active.id as string;
+    const data = e.active.data.current;
+
+    if (data?.source === 'palette') {
+      if (data.kind === 'ref') {
+        setActive({ source: 'palette-ref', name: data.name as string, variant: 'ref' });
+      } else if (data.kind === 'infer') {
+        setActive({ source: 'palette-ref', name: data.name as string, variant: 'infer' });
+      } else {
+        const opt = BLOCK_OPTIONS.find(o => o.kind === data.kind);
+        setActive({ source: 'palette', kind: data.kind as NodeKind, label: opt?.label ?? String(data.kind) });
+      }
+    } else {
+      setActive({ source: 'tree', id });
+    }
   }
 
   function onDragEnd(e: DragEndEvent) {
-    setActiveId(null);
-    const { active, over } = e;
-    if (!over) return;
+    const prevActive = active;
+    setActive(null);
+    const { over } = e;
+    if (!over || !prevActive) return;
 
-    const draggedId = active.id as NodeId;
     let targetSlot;
     try {
       targetSlot = deserializeSlotRef(over.id as string);
@@ -57,25 +78,50 @@ export default function TreeDndContext({ root, children, onRootChange, typeResul
       return;
     }
 
-    if (!canDrop(root, draggedId, targetSlot)) return;
-    const newRoot = moveNode(root, draggedId, targetSlot);
-    onRootChange(newRoot);
+    if (prevActive.source === 'tree') {
+      const draggedId = prevActive.id;
+      if (!canDrop(root, draggedId, targetSlot)) return;
+      onRootChange(moveNode(root, draggedId, targetSlot));
+      return;
+    }
+
+    // palette drop — create a new node
+    let newNode: TypeNode;
+    if (prevActive.source === 'palette-ref') {
+      newNode = prevActive.variant === 'ref'
+        ? { id: newId(), kind: 'ref', name: prevActive.name }
+        : { id: newId(), kind: 'infer', name: prevActive.name };
+    } else {
+      newNode = createDefaultNode(prevActive.kind);
+    }
+
+    onRootChange(placeNode(root, targetSlot, newNode));
   }
 
-  const activeNode = activeId ? findNode(activeId) : null;
+  const activeTreeNode = active?.source === 'tree' ? findNode(active.id) : null;
 
   return (
     <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
       {children}
-      <DragOverlay>
-        {activeNode && (
+      <DragOverlay dropAnimation={null}>
+        {active?.source === 'tree' && activeTreeNode && (
           <div className="opacity-80 pointer-events-none">
             <NodeCard
-              node={activeNode}
+              node={activeTreeNode}
               rootNode={root}
               onNodeUpdate={onNodeUpdate}
               refNames={refNames}
             />
+          </div>
+        )}
+        {active?.source === 'palette' && (
+          <div className="bg-white border border-blue-300 rounded-lg px-3 py-1.5 shadow-lg text-sm font-mono text-blue-600 pointer-events-none">
+            {active.label}
+          </div>
+        )}
+        {active?.source === 'palette-ref' && (
+          <div className={`border rounded-lg px-3 py-1.5 shadow-lg text-sm font-mono pointer-events-none ${active.variant === 'infer' ? 'bg-violet-50 border-violet-300 text-violet-700' : 'bg-blue-50 border-blue-300 text-blue-700'}`}>
+            {active.name}
           </div>
         )}
       </DragOverlay>

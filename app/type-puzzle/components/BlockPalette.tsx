@@ -1,5 +1,6 @@
 'use client';
 
+import { useDraggable } from '@dnd-kit/core';
 import { TypeNode, NodeKind } from '../lib/types';
 import { newId } from '../lib/nodes';
 
@@ -10,7 +11,7 @@ interface Props {
   refNames?: string[];
 }
 
-const BLOCK_OPTIONS: { kind: NodeKind; label: string; description: string }[] = [
+export const BLOCK_OPTIONS: { kind: NodeKind; label: string; description: string }[] = [
   { kind: 'primitive', label: 'Primitive', description: 'string / number / boolean' },
   { kind: 'literal', label: 'Literal', description: '文字列・数値・真偽値リテラル' },
   { kind: 'object', label: 'Object', description: '{ key: Type }' },
@@ -25,7 +26,7 @@ const BLOCK_OPTIONS: { kind: NodeKind; label: string; description: string }[] = 
   { kind: 'templateLiteral', label: 'Template Literal', description: '`${T}-suffix`' },
 ];
 
-function createDefaultNode(kind: NodeKind): TypeNode {
+export function createDefaultNode(kind: NodeKind): TypeNode {
   const id = newId();
   switch (kind) {
     case 'primitive': return { id, kind: 'primitive', name: 'string' };
@@ -59,6 +60,56 @@ function createDefaultNode(kind: NodeKind): TypeNode {
   }
 }
 
+interface PaletteItemProps {
+  kind: NodeKind;
+  label: string;
+  description: string;
+  onClick: () => void;
+}
+
+function PaletteItem({ kind, label, description, onClick }: PaletteItemProps) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `palette:${kind}`,
+    data: { source: 'palette', kind },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`flex items-center gap-1 px-2 py-1.5 text-sm rounded cursor-grab active:cursor-grabbing hover:bg-gray-100 select-none ${isDragging ? 'opacity-40' : ''}`}
+      {...listeners}
+      {...attributes}
+      onClick={onClick}
+    >
+      <span className="font-mono text-blue-600">{label}</span>
+      <span className="text-gray-400 ml-2 text-xs">{description}</span>
+    </div>
+  );
+}
+
+interface RefItemProps {
+  dragId: string;
+  label: string;
+  className: string;
+  onClick: () => void;
+  data: Record<string, unknown>;
+}
+
+function RefItem({ dragId, label, className, onClick, data }: RefItemProps) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: dragId, data });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`block w-full text-left px-2 py-1.5 text-sm rounded cursor-grab active:cursor-grabbing select-none ${className} ${isDragging ? 'opacity-40' : ''}`}
+      {...listeners}
+      {...attributes}
+      onClick={onClick}
+    >
+      {label}
+    </div>
+  );
+}
+
 export default function BlockPalette({ onSelect, onClose, inferNames = [], refNames = [] }: Props) {
   return (
     <div className="absolute z-50 bg-white border border-gray-300 rounded-lg shadow-xl p-3 min-w-64 max-h-96 overflow-y-auto">
@@ -66,18 +117,20 @@ export default function BlockPalette({ onSelect, onClose, inferNames = [], refNa
         <span className="text-sm font-semibold text-gray-700">ブロックを選ぶ</span>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
       </div>
+      <p className="text-xs text-gray-400 mb-2">クリックまたはドラッグでスロットへ追加</p>
 
       {refNames.length > 0 && (
         <div className="mb-2">
           <div className="text-xs text-gray-500 mb-1">参照</div>
           {refNames.map(name => (
-            <button
+            <RefItem
               key={`ref-${name}`}
+              dragId={`palette:ref:${name}`}
+              label={name}
+              className="hover:bg-blue-50 text-blue-700 font-mono"
+              data={{ source: 'palette', kind: 'ref', name }}
               onClick={() => { onSelect({ id: newId(), kind: 'ref', name }); onClose(); }}
-              className="block w-full text-left px-2 py-1.5 text-sm rounded hover:bg-blue-50 text-blue-700 font-mono"
-            >
-              {name}
-            </button>
+            />
           ))}
         </div>
       )}
@@ -86,27 +139,27 @@ export default function BlockPalette({ onSelect, onClose, inferNames = [], refNa
         <div className="mb-2">
           <div className="text-xs text-gray-500 mb-1">束縛済み infer</div>
           {inferNames.map(name => (
-            <button
+            <RefItem
               key={`infer-${name}`}
+              dragId={`palette:infer:${name}`}
+              label={name}
+              className="hover:bg-purple-50 text-purple-700 font-mono"
+              data={{ source: 'palette', kind: 'infer', name }}
               onClick={() => { onSelect({ id: newId(), kind: 'infer', name }); onClose(); }}
-              className="block w-full text-left px-2 py-1.5 text-sm rounded hover:bg-purple-50 text-purple-700 font-mono"
-            >
-              {name}
-            </button>
+            />
           ))}
         </div>
       )}
 
       <div className="text-xs text-gray-500 mb-1">ブロック</div>
       {BLOCK_OPTIONS.map(opt => (
-        <button
+        <PaletteItem
           key={opt.kind}
+          kind={opt.kind}
+          label={opt.label}
+          description={opt.description}
           onClick={() => { onSelect(createDefaultNode(opt.kind)); onClose(); }}
-          className="block w-full text-left px-2 py-1.5 text-sm rounded hover:bg-gray-100"
-        >
-          <span className="font-mono text-blue-600">{opt.label}</span>
-          <span className="text-gray-400 ml-2 text-xs">{opt.description}</span>
-        </button>
+        />
       ))}
     </div>
   );
