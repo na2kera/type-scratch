@@ -289,6 +289,13 @@ function findParentSlot(root: TypeNode, childId: NodeId): SlotRef | null {
   return search(root);
 }
 
+/** パレットからの新規ノードをスロットに配置する。既存ノードは上書き(破棄)。 */
+export function placeNode(root: TypeNode | null, target: SlotRef, node: TypeNode): TypeNode | null {
+  if (target.kind === 'root') return node;
+  const [newRoot] = insertAt(root, target, node);
+  return newRoot;
+}
+
 export function serializeSlotRef(ref: SlotRef): string {
   return JSON.stringify(ref);
 }
