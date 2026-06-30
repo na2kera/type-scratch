@@ -11,20 +11,37 @@ interface Props {
   refNames?: string[];
 }
 
-export const BLOCK_OPTIONS: { kind: NodeKind; label: string; description: string }[] = [
-  { kind: 'primitive', label: 'Primitive', description: 'string / number / boolean' },
-  { kind: 'literal', label: 'Literal', description: '文字列・数値・真偽値リテラル' },
-  { kind: 'object', label: 'Object', description: '{ key: Type }' },
-  { kind: 'union', label: 'Union (|)', description: 'A | B | ...' },
-  { kind: 'intersection', label: 'Intersection (&)', description: 'A & B & ...' },
-  { kind: 'tuple', label: 'Tuple', description: '[A, B, ...]' },
-  { kind: 'array', label: 'Array (T[])', description: 'T[]' },
-  { kind: 'keyof', label: 'keyof', description: 'keyof T' },
-  { kind: 'indexedAccess', label: 'T[K]', description: 'インデックスアクセス型' },
-  { kind: 'mappedType', label: 'Mapped Type', description: '{ [K in Keys]: ... }' },
-  { kind: 'conditional', label: 'Conditional Type', description: 'T extends U ? A : B' },
-  { kind: 'infer', label: 'infer', description: 'infer R (条件型のextends句内)' },
-  { kind: 'templateLiteral', label: 'Template Literal', description: '`${T}-suffix`' },
+const KIND_BG: Record<string, string> = {
+  object:          '#f59e0b',
+  primitive:       '#10b981',
+  literal:         '#84cc16',
+  union:           '#8b5cf6',
+  intersection:    '#d946ef',
+  tuple:           '#6366f1',
+  array:           '#06b6d4',
+  keyof:           '#2563eb',
+  indexedAccess:   '#0d9488',
+  mappedType:      '#ea580c',
+  conditional:     '#ef4444',
+  infer:           '#9333ea',
+  templateLiteral: '#db2777',
+  ref:             '#475569',
+};
+
+export const BLOCK_OPTIONS: { kind: NodeKind; label: string; desc: string }[] = [
+  { kind: 'primitive',       label: 'Primitive',       desc: 'string / number / boolean' },
+  { kind: 'literal',         label: 'Literal',         desc: '値リテラル' },
+  { kind: 'object',          label: 'Object',          desc: '{ key: Type }' },
+  { kind: 'union',           label: 'Union  |',        desc: 'A | B | ...' },
+  { kind: 'intersection',    label: 'Intersection  &', desc: 'A & B & ...' },
+  { kind: 'tuple',           label: 'Tuple',           desc: '[A, B, ...]' },
+  { kind: 'array',           label: 'Array  T[]',      desc: 'T[]' },
+  { kind: 'keyof',           label: 'keyof',           desc: 'keyof T' },
+  { kind: 'indexedAccess',   label: 'T[K]',            desc: 'インデックスアクセス型' },
+  { kind: 'mappedType',      label: 'Mapped Type',     desc: '{ [K in Keys]: ... }' },
+  { kind: 'conditional',     label: 'Conditional',     desc: 'T extends U ? A : B' },
+  { kind: 'infer',           label: 'infer',           desc: 'infer R' },
+  { kind: 'templateLiteral', label: 'Template Literal', desc: '`${T}-suffix`' },
 ];
 
 export function createDefaultNode(kind: NodeKind): TypeNode {
@@ -65,11 +82,12 @@ export function createDefaultNode(kind: NodeKind): TypeNode {
 interface PaletteItemProps {
   kind: NodeKind;
   label: string;
-  description: string;
+  desc: string;
   onClick: () => void;
 }
 
-function PaletteItem({ kind, label, description, onClick }: PaletteItemProps) {
+function PaletteItem({ kind, label, desc, onClick }: PaletteItemProps) {
+  const bg = KIND_BG[kind] ?? '#64748b';
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `palette:${kind}`,
     data: { source: 'palette', kind },
@@ -78,13 +96,37 @@ function PaletteItem({ kind, label, description, onClick }: PaletteItemProps) {
   return (
     <div
       ref={setNodeRef}
-      className={`flex items-center gap-1 px-2 py-1.5 text-sm rounded cursor-grab active:cursor-grabbing hover:bg-gray-100 select-none ${isDragging ? 'opacity-40' : ''}`}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '6px 10px',
+        borderRadius: '8px',
+        cursor: 'grab',
+        opacity: isDragging ? 0.4 : 1,
+        transition: 'opacity 0.1s, background 0.1s',
+        userSelect: 'none',
+      }}
+      className="hover:bg-slate-50"
       {...listeners}
       {...attributes}
       onClick={onClick}
     >
-      <span className="font-mono text-blue-600">{label}</span>
-      <span className="text-gray-400 ml-2 text-xs">{description}</span>
+      <div style={{
+        width: '10px',
+        height: '28px',
+        borderRadius: '4px',
+        background: bg,
+        flexShrink: 0,
+      }} />
+      <div>
+        <div style={{ fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontSize: '12px', fontWeight: 600, color: '#1e293b' }}>
+          {label}
+        </div>
+        <div style={{ fontSize: '10px', color: '#94a3b8', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', marginTop: '1px' }}>
+          {desc}
+        </div>
+      </div>
     </div>
   );
 }
@@ -92,17 +134,31 @@ function PaletteItem({ kind, label, description, onClick }: PaletteItemProps) {
 interface RefItemProps {
   dragId: string;
   label: string;
-  className: string;
+  bg: string;
   onClick: () => void;
   data: Record<string, unknown>;
 }
 
-function RefItem({ dragId, label, className, onClick, data }: RefItemProps) {
+function RefItem({ dragId, label, bg, onClick, data }: RefItemProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: dragId, data });
   return (
     <div
       ref={setNodeRef}
-      className={`block w-full text-left px-2 py-1.5 text-sm rounded cursor-grab active:cursor-grabbing select-none ${className} ${isDragging ? 'opacity-40' : ''}`}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '3px 10px',
+        borderRadius: '20px',
+        background: bg,
+        color: 'white',
+        fontSize: '12px',
+        fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
+        fontWeight: 600,
+        cursor: 'grab',
+        opacity: isDragging ? 0.4 : 1,
+        userSelect: 'none',
+        margin: '2px',
+      }}
       {...listeners}
       {...attributes}
       onClick={onClick}
@@ -114,52 +170,67 @@ function RefItem({ dragId, label, className, onClick, data }: RefItemProps) {
 
 export default function BlockPalette({ onSelect, onClose, inferNames = [], refNames = [] }: Props) {
   return (
-    <div className="absolute z-50 bg-white border border-gray-300 rounded-lg shadow-xl p-3 min-w-64 max-h-96 overflow-y-auto">
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-sm font-semibold text-gray-700">ブロックを選ぶ</span>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
+    <div style={{
+      position: 'absolute',
+      zIndex: 50,
+      background: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '14px',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+      padding: '12px',
+      minWidth: '240px',
+      maxHeight: '420px',
+      overflowY: 'auto',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <span style={{ fontSize: '13px', fontWeight: 800, color: '#1e293b', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif' }}>ブロックを選ぶ</span>
+        <button
+          onClick={onClose}
+          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '18px', lineHeight: 1, padding: '0 2px' }}
+        >
+          ×
+        </button>
       </div>
-      <p className="text-xs text-gray-400 mb-2">クリックまたはドラッグでスロットへ追加</p>
 
-      {refNames.length > 0 && (
-        <div className="mb-2">
-          <div className="text-xs text-gray-500 mb-1">参照</div>
-          {refNames.map(name => (
-            <RefItem
-              key={`ref-${name}`}
-              dragId={`palette:ref:${name}`}
-              label={name}
-              className="hover:bg-blue-50 text-blue-700 font-mono"
-              data={{ source: 'palette', kind: 'ref', name }}
-              onClick={() => { onSelect({ id: newId(), kind: 'ref', name }); onClose(); }}
-            />
-          ))}
+      {(refNames.length > 0 || inferNames.length > 0) && (
+        <div style={{ marginBottom: '10px', padding: '8px 10px', background: '#f8fafc', borderRadius: '8px' }}>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif' }}>
+            参照
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+            {refNames.map(name => (
+              <RefItem
+                key={`ref-${name}`}
+                dragId={`palette:ref:${name}`}
+                label={name}
+                bg="#475569"
+                data={{ source: 'palette', kind: 'ref', name }}
+                onClick={() => { onSelect({ id: newId(), kind: 'ref', name }); onClose(); }}
+              />
+            ))}
+            {inferNames.map(name => (
+              <RefItem
+                key={`infer-${name}`}
+                dragId={`palette:infer:${name}`}
+                label={`infer ${name}`}
+                bg="#9333ea"
+                data={{ source: 'palette', kind: 'infer', name }}
+                onClick={() => { onSelect({ id: newId(), kind: 'infer', name }); onClose(); }}
+              />
+            ))}
+          </div>
         </div>
       )}
 
-      {inferNames.length > 0 && (
-        <div className="mb-2">
-          <div className="text-xs text-gray-500 mb-1">束縛済み infer</div>
-          {inferNames.map(name => (
-            <RefItem
-              key={`infer-${name}`}
-              dragId={`palette:infer:${name}`}
-              label={name}
-              className="hover:bg-purple-50 text-purple-700 font-mono"
-              data={{ source: 'palette', kind: 'infer', name }}
-              onClick={() => { onSelect({ id: newId(), kind: 'infer', name }); onClose(); }}
-            />
-          ))}
-        </div>
-      )}
-
-      <div className="text-xs text-gray-500 mb-1">ブロック</div>
+      <div style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px', paddingLeft: '10px', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif' }}>
+        ブロック
+      </div>
       {BLOCK_OPTIONS.map(opt => (
         <PaletteItem
           key={opt.kind}
           kind={opt.kind}
           label={opt.label}
-          description={opt.description}
+          desc={opt.desc}
           onClick={() => { onSelect(createDefaultNode(opt.kind)); onClose(); }}
         />
       ))}
