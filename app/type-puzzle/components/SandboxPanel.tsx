@@ -6,6 +6,7 @@ import NodeCard from './NodeCard';
 import TreeDndContext from './TreeDndContext';
 import RootDropZone from './RootDropZone';
 import UndoControls from './UndoControls';
+import CodePreview from './CodePreview';
 
 interface Props {
   typeResult?: TypeResultMap;
@@ -15,13 +16,14 @@ interface Props {
   onBaseRowsChange: (rows: BaseRow[]) => void;
   onNodeUpdate: (id: NodeId, updater: (node: TypeNode) => TypeNode) => void;
   outputResult?: NodeTypeResult;
+  codeSource: string;
   onUndo: () => void;
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
 }
 
-export default function SandboxPanel({ typeResult, root, onRootChange, baseRows, onBaseRowsChange, onNodeUpdate, outputResult, onUndo, onRedo, canUndo, canRedo }: Props) {
+export default function SandboxPanel({ typeResult, root, onRootChange, baseRows, onBaseRowsChange, onNodeUpdate, outputResult, codeSource, onUndo, onRedo, canUndo, canRedo }: Props) {
   const refNames = ['T'];
 
   return (
@@ -104,6 +106,9 @@ export default function SandboxPanel({ typeResult, root, onRootChange, baseRows,
             </div>
           </div>
         )}
+
+        {/* Generated code preview */}
+        <CodePreview source={codeSource} />
       </div>
     </div>
   );
