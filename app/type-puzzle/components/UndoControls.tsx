@@ -9,14 +9,33 @@ interface Props {
   hasRoot: boolean;
 }
 
+const btnBase: React.CSSProperties = {
+  padding: '5px 12px',
+  borderRadius: '8px',
+  border: '1.5px solid #e2e8f0',
+  background: 'white',
+  fontFamily: 'Nunito, sans-serif',
+  fontSize: '12px',
+  fontWeight: 700,
+  cursor: 'pointer',
+  transition: 'all 0.1s',
+  color: '#64748b',
+};
+
+const btnDisabled: React.CSSProperties = {
+  ...btnBase,
+  opacity: 0.35,
+  cursor: 'not-allowed',
+};
+
 export default function UndoControls({ onUndo, onRedo, canUndo, canRedo, onReset, hasRoot }: Props) {
   return (
-    <div className="flex items-center gap-2">
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
       <button
         onClick={onUndo}
         disabled={!canUndo}
         title="元に戻す (Ctrl+Z)"
-        className="px-2 py-1 text-xs rounded border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+        style={canUndo ? btnBase : btnDisabled}
       >
         ↩ Undo
       </button>
@@ -24,13 +43,21 @@ export default function UndoControls({ onUndo, onRedo, canUndo, canRedo, onReset
         onClick={onRedo}
         disabled={!canRedo}
         title="やり直す (Ctrl+Shift+Z)"
-        className="px-2 py-1 text-xs rounded border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+        style={canRedo ? btnBase : btnDisabled}
       >
         ↪ Redo
       </button>
       {hasRoot && (
-        <button onClick={onReset} className="text-xs text-gray-400 hover:text-red-400">
-          全リセット
+        <button
+          onClick={onReset}
+          style={{
+            ...btnBase,
+            border: '1.5px solid #fecaca',
+            color: '#ef4444',
+            background: '#fff5f5',
+          }}
+        >
+          リセット
         </button>
       )}
     </div>

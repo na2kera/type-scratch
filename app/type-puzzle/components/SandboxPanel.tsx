@@ -25,13 +25,18 @@ export default function SandboxPanel({ typeResult, root, onRootChange, baseRows,
   const refNames = ['T'];
 
   return (
-    <div className="flex gap-4">
-      <div className="w-72 shrink-0">
+    <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+      {/* Left: base type editor */}
+      <div style={{ width: '240px', flexShrink: 0 }}>
         <BaseTypeEditor rows={baseRows} onChange={onBaseRowsChange} />
       </div>
-      <div className="flex-1">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="text-xs font-mono text-zinc-400 uppercase tracking-widest">tree</div>
+
+      {/* Right: canvas */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+          <span style={{ fontFamily: 'Nunito, sans-serif', fontSize: '12px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            ブロックツリー
+          </span>
           <UndoControls
             onUndo={onUndo}
             onRedo={onRedo}
@@ -41,6 +46,7 @@ export default function SandboxPanel({ typeResult, root, onRootChange, baseRows,
             hasRoot={!!root}
           />
         </div>
+
         <TreeDndContext root={root} onRootChange={onRootChange} typeResult={typeResult} onNodeUpdate={onNodeUpdate} refNames={refNames}>
           {root ? (
             <NodeCard
@@ -56,10 +62,46 @@ export default function SandboxPanel({ typeResult, root, onRootChange, baseRows,
             <RootDropZone onSet={onRootChange} refNames={refNames} />
           )}
         </TreeDndContext>
+
+        {/* Output result */}
         {outputResult && (
-          <div className={`mt-3 p-3 rounded-lg text-sm font-mono ${outputResult.errors.length > 0 ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-800 border border-green-200'}`}>
-            <div className="text-xs text-gray-500 mb-1">結果:</div>
-            {outputResult.errors.length > 0 ? outputResult.errors[0] : outputResult.displayString}
+          <div style={{
+            marginTop: '16px',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            border: `2px solid ${outputResult.errors.length > 0 ? '#fecaca' : '#bbf7d0'}`,
+          }}>
+            <div style={{
+              background: outputResult.errors.length > 0 ? '#fee2e2' : '#dcfce7',
+              padding: '6px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}>
+              <span style={{ fontSize: '14px' }}>{outputResult.errors.length > 0 ? '!' : '✓'}</span>
+              <span style={{
+                fontFamily: 'Nunito, sans-serif',
+                fontSize: '11px',
+                fontWeight: 800,
+                color: outputResult.errors.length > 0 ? '#991b1b' : '#166534',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}>
+                {outputResult.errors.length > 0 ? 'エラー' : '結果'}
+              </span>
+            </div>
+            <div style={{
+              background: '#1e293b',
+              padding: '12px 14px',
+              fontFamily: 'Fira Code, monospace',
+              fontSize: '12px',
+              color: outputResult.errors.length > 0 ? '#fca5a5' : '#86efac',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-all',
+              lineHeight: 1.6,
+            }}>
+              {outputResult.errors.length > 0 ? outputResult.errors[0].split('\n')[0] : outputResult.displayString}
+            </div>
           </div>
         )}
       </div>

@@ -17,21 +17,51 @@ export default function RootDropZone({ onSet, refNames }: Props) {
   const { isOver, setNodeRef } = useDroppable({ id: slotId });
 
   return (
-    <div ref={setNodeRef} className={`relative flex items-center justify-center h-24 border-2 border-dashed rounded-xl transition-colors ${isOver ? 'border-blue-400 bg-blue-50' : 'border-gray-300 bg-gray-50'}`}>
-      <div className="relative">
-        <button
-          onClick={() => setShowPalette(s => !s)}
-          className="px-4 py-2 text-sm text-gray-400 hover:text-blue-500"
-        >
-          + ルートブロックを選ぶ
-        </button>
-        {showPalette && (
-          <BlockPalette
-            onSelect={onSet}
-            onClose={() => setShowPalette(false)}
-            refNames={refNames}
-          />
-        )}
+    <div
+      ref={setNodeRef}
+      style={{
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '120px',
+        border: `2.5px dashed ${isOver ? '#2563eb' : '#cbd5e1'}`,
+        borderRadius: '16px',
+        background: isOver ? 'rgba(37,99,235,0.05)' : 'rgba(255,255,255,0.6)',
+        transition: 'all 0.15s',
+      }}
+    >
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: '28px', marginBottom: '8px', opacity: 0.4 }}>⊞</div>
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <button
+            onClick={() => setShowPalette(s => !s)}
+            style={{
+              padding: '8px 20px',
+              borderRadius: '10px',
+              border: 'none',
+              background: isOver ? '#2563eb' : '#f1f5f9',
+              color: isOver ? 'white' : '#64748b',
+              fontFamily: 'Nunito, sans-serif',
+              fontSize: '13px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+          >
+            {isOver ? 'ここにドロップ' : '+ ルートブロックを選ぶ'}
+          </button>
+          {showPalette && (
+            <BlockPalette
+              onSelect={onSet}
+              onClose={() => setShowPalette(false)}
+              refNames={refNames}
+            />
+          )}
+        </div>
+        <div style={{ marginTop: '6px', fontSize: '11px', color: '#94a3b8', fontFamily: 'Nunito, sans-serif' }}>
+          またはパレットからドラッグ
+        </div>
       </div>
     </div>
   );

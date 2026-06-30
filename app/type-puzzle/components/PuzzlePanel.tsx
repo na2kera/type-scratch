@@ -37,34 +37,120 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
 
   return (
     <div>
-      {/* タブ */}
-      <div className="flex gap-1 mb-4 border-b border-gray-200">
-        {puzzles.map(p => (
-          <button
-            key={p.id}
-            onClick={() => onPuzzleChange(p.id)}
-            className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 ${p.id === currentPuzzleId ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-          >
-            {p.title}
-            {solved.has(p.id) && (
-              <span className="text-green-500 text-xs">✓</span>
-            )}
-          </button>
-        ))}
+      {/* Puzzle tabs */}
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', flexWrap: 'wrap' }}>
+        {puzzles.map((p, idx) => {
+          const isCurrent = p.id === currentPuzzleId;
+          const isSolved = solved.has(p.id);
+          return (
+            <button
+              key={p.id}
+              onClick={() => onPuzzleChange(p.id)}
+              style={{
+                padding: '6px 16px',
+                borderRadius: '10px',
+                border: `2px solid ${isCurrent ? '#2563eb' : '#e2e8f0'}`,
+                background: isCurrent ? '#2563eb' : 'white',
+                color: isCurrent ? 'white' : '#475569',
+                fontFamily: 'Nunito, sans-serif',
+                fontSize: '13px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.12s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <span style={{
+                width: '20px',
+                height: '20px',
+                borderRadius: '50%',
+                background: isCurrent ? 'rgba(255,255,255,0.25)' : '#f1f5f9',
+                color: isCurrent ? 'white' : '#94a3b8',
+                fontSize: '10px',
+                fontWeight: 800,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                {idx + 1}
+              </span>
+              {p.title}
+              {isSolved && (
+                <span style={{
+                  width: '16px',
+                  height: '16px',
+                  borderRadius: '50%',
+                  background: '#22c55e',
+                  color: 'white',
+                  fontSize: '9px',
+                  fontWeight: 900,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  ✓
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
-      {/* 問題文 */}
-      <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-4">
-        <div className="text-sm text-gray-700 mb-2">{puzzle.description}</div>
-        <div className="font-mono text-sm bg-white rounded p-2 border border-blue-200 text-blue-800">
-          {puzzle.targetCodeDisplay}
+      {/* Problem description */}
+      <div style={{
+        background: 'white',
+        borderRadius: '14px',
+        overflow: 'hidden',
+        border: '1.5px solid #e2e8f0',
+        marginBottom: '16px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+      }}>
+        <div style={{
+          background: '#2563eb',
+          padding: '10px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+        }}>
+          <span style={{ fontSize: '16px' }}>🎯</span>
+          <span style={{ fontFamily: 'Nunito, sans-serif', fontSize: '12px', fontWeight: 800, color: 'rgba(255,255,255,0.9)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            問題
+          </span>
         </div>
-        <div className="text-xs text-gray-400 mt-2 font-mono">{puzzle.baseTypeSource}</div>
+        <div style={{ padding: '14px 16px' }}>
+          <p style={{ fontFamily: 'Nunito, sans-serif', fontSize: '13px', color: '#334155', lineHeight: 1.6, marginBottom: '10px' }}>
+            {puzzle.description}
+          </p>
+          <div style={{
+            background: '#1e293b',
+            borderRadius: '10px',
+            padding: '12px 16px',
+            fontFamily: 'Fira Code, monospace',
+            fontSize: '13px',
+            color: '#67e8f9',
+            fontWeight: 600,
+          }}>
+            {puzzle.targetCodeDisplay}
+          </div>
+          <div style={{
+            marginTop: '8px',
+            fontFamily: 'Fira Code, monospace',
+            fontSize: '11px',
+            color: '#94a3b8',
+          }}>
+            {puzzle.baseTypeSource}
+          </div>
+        </div>
       </div>
 
-      {/* ツリー */}
-      <div className="mb-3 flex items-center justify-between">
-        <div className="text-xs font-mono text-zinc-400 uppercase tracking-widest">tree</div>
+      {/* Tree area */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+        <span style={{ fontFamily: 'Nunito, sans-serif', fontSize: '12px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          ブロックツリー
+        </span>
         <UndoControls
           onUndo={onUndo}
           onRedo={onRedo}
@@ -91,18 +177,44 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
         )}
       </TreeDndContext>
 
-      {/* 判定 */}
-      <div className="mt-4 flex items-center gap-3">
+      {/* Judge section */}
+      <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button
           onClick={handleJudge}
           disabled={!root || judging}
-          className="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            padding: '10px 28px',
+            borderRadius: '12px',
+            border: 'none',
+            background: !root || judging ? '#e2e8f0' : '#2563eb',
+            color: !root || judging ? '#94a3b8' : 'white',
+            fontFamily: 'Nunito, sans-serif',
+            fontSize: '14px',
+            fontWeight: 800,
+            cursor: !root || judging ? 'not-allowed' : 'pointer',
+            transition: 'all 0.15s',
+            boxShadow: !root || judging ? 'none' : '0 4px 12px rgba(37,99,235,0.35)',
+          }}
         >
-          {judging ? '判定中...' : '判定する'}
+          {judging ? '⏳ 判定中...' : '✓ 判定する'}
         </button>
+
         {judgeResult !== null && (
-          <div className={`px-3 py-2 rounded-lg text-sm font-semibold ${judgeResult ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
-            {judgeResult ? '正解!' : '不正解...もう一度試してみてください'}
+          <div style={{
+            padding: '10px 20px',
+            borderRadius: '12px',
+            background: judgeResult ? '#dcfce7' : '#fee2e2',
+            border: `2px solid ${judgeResult ? '#86efac' : '#fca5a5'}`,
+            fontFamily: 'Nunito, sans-serif',
+            fontSize: '14px',
+            fontWeight: 800,
+            color: judgeResult ? '#166534' : '#991b1b',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}>
+            <span style={{ fontSize: '18px' }}>{judgeResult ? '🎉' : '😅'}</span>
+            {judgeResult ? '正解！' : 'もう一度試してみてください'}
           </div>
         )}
       </div>

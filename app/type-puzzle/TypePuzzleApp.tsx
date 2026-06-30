@@ -26,23 +26,19 @@ function updateNodeInTree(root: TypeNode | null, id: NodeId, updater: (node: Typ
 export default function TypePuzzleApp() {
   const [mode, setMode] = useState<'sandbox' | 'puzzle'>('sandbox');
 
-  // Sandbox state with undo/redo
   const sandbox = useUndoable<TypeNode | null>(null);
   const [baseRows, setBaseRows] = useState<BaseRow[]>([
     { key: 'name', type: 'string' },
     { key: 'age', type: 'number' },
   ]);
 
-  // Puzzle state with undo/redo
   const puzzle = useUndoable<TypeNode | null>(null);
   const [currentPuzzleId, setCurrentPuzzleId] = useState(puzzles[0].id);
   const [judgeResult, setJudgeResult] = useState<boolean | null>(null);
   const { solved, markSolved } = useProgress();
   const { show: showTutorial, dismiss: dismissTutorial, open: openTutorial } = useTutorial();
-  // puzzle tree を切り替え時に保持するためのマップ
   const puzzleRootsRef = useRef<Record<string, TypeNode | null>>({});
 
-  // Type evaluation results
   const [typeResult, setTypeResult] = useState<TypeResultMap>({});
   const [outputResult, setOutputResult] = useState<NodeTypeResult | undefined>(undefined);
 
@@ -83,7 +79,6 @@ export default function TypePuzzleApp() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, currentPuzzleId, sandbox.present, puzzle.present]);
 
-  // puzzle切り替え: 現在のtreeを保存し、切り替え先のtreeで履歴リセット
   function handlePuzzleChange(id: string) {
     puzzleRootsRef.current[currentPuzzleId] = puzzle.present;
     const savedRoot = puzzleRootsRef.current[id] ?? null;
@@ -92,7 +87,6 @@ export default function TypePuzzleApp() {
     setJudgeResult(null);
   }
 
-  // キーボードショートカット (Ctrl+Z / Ctrl+Shift+Z)
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (!(e.ctrlKey || e.metaKey)) return;
@@ -108,7 +102,6 @@ export default function TypePuzzleApp() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [current.undo, current.redo]);
 
-  // Debounced evaluation
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
@@ -154,28 +147,33 @@ export default function TypePuzzleApp() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen" style={{ background: '#eef2f7' }}>
       {showTutorial && <Tutorial onDismiss={dismissTutorial} />}
-      <header className="bg-zinc-900 px-6 py-3">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="text-xs font-mono text-zinc-400 border border-zinc-700 rounded px-1.5 py-0.5 leading-tight select-none">TS</span>
-            <h1 className="text-sm font-mono font-semibold text-zinc-100 tracking-tight">type-puzzle</h1>
-          </div>
+
+      <header style={{ background: '#2563eb', boxShadow: '0 3px 12px rgba(37,99,235,0.35)' }}>
+        <div style={{ maxWidth: '1280px' }} className="mx-auto px-5 flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
+            <div style={{ background: 'white', borderRadius: '8px', padding: '4px 10px', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }}>
+              <span style={{ color: '#2563eb', fontFamily: 'Fira Code, monospace', fontWeight: 700, fontSize: '13px', letterSpacing: '-0.5px' }}>TS</span>
+            </div>
+            <h1 style={{ fontFamily: 'Nunito, sans-serif', color: 'white', fontWeight: 900, fontSize: '20px', letterSpacing: '-0.5px', margin: 0 }}>
+              type-puzzle
+            </h1>
+          </div>
+          <div className="flex items-center gap-4">
             <button
               onClick={openTutorial}
-              className="text-zinc-500 hover:text-zinc-300 text-xs font-mono transition-colors"
-              title="チュートリアルを表示"
+              style={{ color: 'rgba(255,255,255,0.75)', fontSize: '13px', fontWeight: 600, fontFamily: 'Nunito, sans-serif', background: 'none', border: 'none', cursor: 'pointer' }}
+              className="hover:text-white transition-colors"
             >
-              ?
+              ? ヘルプ
             </button>
             <ModeToggle mode={mode} onChange={setMode} />
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-6">
+      <main style={{ maxWidth: '1280px' }} className="mx-auto px-5 py-5">
         {mode === 'sandbox' ? (
           <SandboxPanel
             typeResult={typeResult}
