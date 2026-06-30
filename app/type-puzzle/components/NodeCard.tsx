@@ -562,6 +562,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
 
   // Leaf nodes rendered inline (no body section needed)
   const isLeaf = ['primitive', 'literal', 'ref', 'infer'].includes(node.kind);
+  const hasResultFooter = !insideExtends && !!result;
 
   return (
     <div
@@ -571,7 +572,6 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
         borderRadius: '10px',
         marginBottom: '6px',
         boxShadow: '0 3px 10px rgba(0,0,0,0.18)',
-        overflow: 'hidden',
         opacity: isDragging ? 0.45 : 1,
         transition: 'opacity 0.1s',
       }}
@@ -629,6 +629,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
           background: 'rgba(0,0,0,0.14)',
           padding: '8px 12px 10px',
           borderTop: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: hasResultFooter ? '0' : '0 0 10px 10px',
         }}>
           {renderContent()}
         </div>
@@ -641,6 +642,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
             background: 'rgba(239,68,68,0.25)',
             borderTop: '1px solid rgba(239,68,68,0.3)',
             padding: '4px 12px',
+            borderRadius: '0 0 10px 10px',
           }}>
             <div style={{
               fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
@@ -683,6 +685,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
             background: 'rgba(0,0,0,0.2)',
             borderTop: '1px solid rgba(255,255,255,0.1)',
             padding: '4px 12px',
+            borderRadius: '0 0 10px 10px',
           }}>
             <div style={{
               fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
