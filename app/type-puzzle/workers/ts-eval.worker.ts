@@ -11,15 +11,37 @@ const compilerOptions: ts.CompilerOptions = {
 let fsMap: Map<string, string> | null = null;
 let cachedEnv: ReturnType<typeof createVirtualTypeScriptEnvironment> | null = null;
 
+function stripAliasesDeep(checker: ts.TypeChecker, type: ts.Type, seen: Set<ts.Type>): void {
+  if (!type || seen.has(type)) return;
+  seen.add(type);
+
+  (type as ts.Type & { aliasSymbol?: unknown; aliasTypeArguments?: unknown }).aliasSymbol = undefined;
+  (type as ts.Type & { aliasTypeArguments?: unknown }).aliasTypeArguments = undefined;
+
+  if (type.isUnionOrIntersection()) {
+    type.types.forEach(t => stripAliasesDeep(checker, t, seen));
+    return;
+  }
+
+  const typeArgs = checker.getTypeArguments(type as ts.TypeReference);
+  typeArgs.forEach(t => stripAliasesDeep(checker, t, seen));
+
+  if (
+    type.flags & ts.TypeFlags.Object &&
+    (type as ts.ObjectType).objectFlags & ts.ObjectFlags.Anonymous
+  ) {
+    for (const prop of checker.getPropertiesOfType(type)) {
+      stripAliasesDeep(checker, checker.getTypeOfSymbol(prop), seen);
+    }
+  }
+}
+
 function formatType(checker: ts.TypeChecker, type: ts.Type): string {
   const flags =
     ts.TypeFormatFlags.NoTruncation |
     ts.TypeFormatFlags.UseSingleQuotesForStringLiteralType;
 
-  if (type.isUnion()) {
-    return type.types.map(t => checker.typeToString(t, undefined, flags)).join(' | ');
-  }
-
+  stripAliasesDeep(checker, type, new Set());
   return checker.typeToString(type, undefined, flags);
 }
 
