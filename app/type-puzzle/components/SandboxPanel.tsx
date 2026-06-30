@@ -34,7 +34,7 @@ export default function SandboxPanel({ typeResult, root, onRootChange, baseRows,
       {/* Right: canvas */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-          <span style={{ fontFamily: 'Nunito, sans-serif', fontSize: '12px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '12px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             ブロックツリー
           </span>
           <UndoControls
@@ -80,7 +80,7 @@ export default function SandboxPanel({ typeResult, root, onRootChange, baseRows,
             }}>
               <span style={{ fontSize: '14px' }}>{outputResult.errors.length > 0 ? '!' : '✓'}</span>
               <span style={{
-                fontFamily: 'Nunito, sans-serif',
+                fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
                 fontSize: '11px',
                 fontWeight: 800,
                 color: outputResult.errors.length > 0 ? '#991b1b' : '#166534',
@@ -93,7 +93,7 @@ export default function SandboxPanel({ typeResult, root, onRootChange, baseRows,
             <div style={{
               background: '#1e293b',
               padding: '12px 14px',
-              fontFamily: 'Fira Code, monospace',
+              fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
               fontSize: '12px',
               color: outputResult.errors.length > 0 ? '#fca5a5' : '#86efac',
               whiteSpace: 'pre-wrap',

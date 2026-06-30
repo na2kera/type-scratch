@@ -14,7 +14,7 @@ const btnBase: React.CSSProperties = {
   borderRadius: '8px',
   border: '1.5px solid #e2e8f0',
   background: 'white',
-  fontFamily: 'Nunito, sans-serif',
+  fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
   fontSize: '12px',
   fontWeight: 700,
   cursor: 'pointer',

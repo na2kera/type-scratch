@@ -17,7 +17,7 @@ export default function ModeToggle({ mode, onChange }: Props) {
             borderRadius: '8px',
             fontSize: '13px',
             fontWeight: 700,
-            fontFamily: 'Nunito, sans-serif',
+            fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
             border: 'none',
             cursor: 'pointer',
             transition: 'all 0.15s',

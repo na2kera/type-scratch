@@ -49,7 +49,7 @@ export default function BaseTypeEditor({ rows, onChange }: Props) {
           flexShrink: 0,
         }} />
         <span style={{
-          fontFamily: 'Fira Code, monospace',
+          fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
           fontSize: '11px',
           fontWeight: 600,
           color: '#64748b',
@@ -64,7 +64,7 @@ export default function BaseTypeEditor({ rows, onChange }: Props) {
       <div style={{
         background: '#1e293b',
         padding: '10px 14px',
-        fontFamily: 'Fira Code, monospace',
+        fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
         fontSize: '11px',
         color: '#94a3b8',
         whiteSpace: 'pre',
@@ -96,7 +96,7 @@ export default function BaseTypeEditor({ rows, onChange }: Props) {
                 value={row.key}
                 onChange={e => updateRow(i, { key: e.target.value })}
                 style={{
-                  fontFamily: 'Fira Code, monospace',
+                  fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
                   fontSize: '12px',
                   border: '1.5px solid #e2e8f0',
                   borderRadius: '7px',
@@ -113,7 +113,7 @@ export default function BaseTypeEditor({ rows, onChange }: Props) {
                 value={row.type}
                 onChange={e => updateRow(i, { type: e.target.value as PrimitiveTypeName })}
                 style={{
-                  fontFamily: 'Fira Code, monospace',
+                  fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
                   fontSize: '12px',
                   border: '1.5px solid #e2e8f0',
                   borderRadius: '7px',
@@ -155,7 +155,7 @@ export default function BaseTypeEditor({ rows, onChange }: Props) {
             border: '1.5px dashed #cbd5e1',
             background: 'transparent',
             color: '#64748b',
-            fontFamily: 'Nunito, sans-serif',
+            fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
             fontSize: '12px',
             fontWeight: 700,
             cursor: 'pointer',

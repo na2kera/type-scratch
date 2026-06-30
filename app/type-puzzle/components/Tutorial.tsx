@@ -79,9 +79,9 @@ export default function Tutorial({ onDismiss }: Props) {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{ background: 'white', borderRadius: '8px', padding: '4px 10px' }}>
-              <span style={{ color: '#2563eb', fontFamily: 'Fira Code, monospace', fontWeight: 700, fontSize: '12px' }}>TS</span>
+              <span style={{ color: '#2563eb', fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontWeight: 700, fontSize: '12px' }}>TS</span>
             </div>
-            <span style={{ fontFamily: 'Nunito, sans-serif', fontSize: '13px', fontWeight: 800, color: 'rgba(255,255,255,0.9)' }}>
+            <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '13px', fontWeight: 800, color: 'rgba(255,255,255,0.9)' }}>
               type-puzzle — チュートリアル
             </span>
           </div>
@@ -117,10 +117,10 @@ export default function Tutorial({ onDismiss }: Props) {
         {/* Content */}
         <div style={{ padding: '24px 24px 16px' }}>
           <div style={{ fontSize: '32px', marginBottom: '12px' }}>{current.emoji}</div>
-          <h2 style={{ fontFamily: 'Nunito, sans-serif', fontSize: '18px', fontWeight: 900, color: '#0f172a', marginBottom: '10px' }}>
+          <h2 style={{ fontFamily: 'var(--font-fredoka), sans-serif', fontSize: '20px', fontWeight: 600, color: '#0f172a', marginBottom: '10px' }}>
             {current.title}
           </h2>
-          <p style={{ fontFamily: 'Nunito, sans-serif', fontSize: '14px', color: '#475569', lineHeight: 1.65, marginBottom: '14px' }}>
+          <p style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '14px', color: '#475569', lineHeight: 1.65, marginBottom: '14px' }}>
             {current.body}
           </p>
           {current.code && (
@@ -128,7 +128,7 @@ export default function Tutorial({ onDismiss }: Props) {
               background: '#1e293b',
               borderRadius: '10px',
               padding: '12px 16px',
-              fontFamily: 'Fira Code, monospace',
+              fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
               fontSize: '13px',
               color: '#67e8f9',
               fontWeight: 600,
@@ -143,7 +143,7 @@ export default function Tutorial({ onDismiss }: Props) {
               background: '#eff6ff',
               borderRadius: '8px',
               borderLeft: '3px solid #2563eb',
-              fontFamily: 'Nunito, sans-serif',
+              fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
               fontSize: '12px',
               color: '#1d4ed8',
               fontWeight: 600,
@@ -155,7 +155,7 @@ export default function Tutorial({ onDismiss }: Props) {
 
         {/* Footer nav */}
         <div style={{ padding: '12px 24px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontFamily: 'Nunito, sans-serif', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>
+          <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>
             {step + 1} / {STEPS.length}
           </span>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -167,7 +167,7 @@ export default function Tutorial({ onDismiss }: Props) {
                   borderRadius: '10px',
                   border: '1.5px solid #e2e8f0',
                   background: 'white',
-                  fontFamily: 'Nunito, sans-serif',
+                  fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
                   fontSize: '13px',
                   fontWeight: 700,
                   color: '#64748b',
@@ -186,7 +186,7 @@ export default function Tutorial({ onDismiss }: Props) {
                   border: 'none',
                   background: '#2563eb',
                   color: 'white',
-                  fontFamily: 'Nunito, sans-serif',
+                  fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
                   fontSize: '13px',
                   fontWeight: 800,
                   cursor: 'pointer',
@@ -204,7 +204,7 @@ export default function Tutorial({ onDismiss }: Props) {
                   border: 'none',
                   background: '#2563eb',
                   color: 'white',
-                  fontFamily: 'Nunito, sans-serif',
+                  fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
                   fontSize: '13px',
                   fontWeight: 800,
                   cursor: 'pointer',

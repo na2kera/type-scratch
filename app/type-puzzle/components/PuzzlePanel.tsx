@@ -52,7 +52,7 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
                 border: `2px solid ${isCurrent ? '#2563eb' : '#e2e8f0'}`,
                 background: isCurrent ? '#2563eb' : 'white',
                 color: isCurrent ? 'white' : '#475569',
-                fontFamily: 'Nunito, sans-serif',
+                fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
                 fontSize: '13px',
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -116,19 +116,19 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
           gap: '8px',
         }}>
           <span style={{ fontSize: '16px' }}>🎯</span>
-          <span style={{ fontFamily: 'Nunito, sans-serif', fontSize: '12px', fontWeight: 800, color: 'rgba(255,255,255,0.9)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '12px', fontWeight: 800, color: 'rgba(255,255,255,0.9)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             問題
           </span>
         </div>
         <div style={{ padding: '14px 16px' }}>
-          <p style={{ fontFamily: 'Nunito, sans-serif', fontSize: '13px', color: '#334155', lineHeight: 1.6, marginBottom: '10px' }}>
+          <p style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '13px', color: '#334155', lineHeight: 1.6, marginBottom: '10px' }}>
             {puzzle.description}
           </p>
           <div style={{
             background: '#1e293b',
             borderRadius: '10px',
             padding: '12px 16px',
-            fontFamily: 'Fira Code, monospace',
+            fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
             fontSize: '13px',
             color: '#67e8f9',
             fontWeight: 600,
@@ -137,7 +137,7 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
           </div>
           <div style={{
             marginTop: '8px',
-            fontFamily: 'Fira Code, monospace',
+            fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
             fontSize: '11px',
             color: '#94a3b8',
           }}>
@@ -148,7 +148,7 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
 
       {/* Tree area */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-        <span style={{ fontFamily: 'Nunito, sans-serif', fontSize: '12px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '12px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           ブロックツリー
         </span>
         <UndoControls
@@ -188,7 +188,7 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
             border: 'none',
             background: !root || judging ? '#e2e8f0' : '#2563eb',
             color: !root || judging ? '#94a3b8' : 'white',
-            fontFamily: 'Nunito, sans-serif',
+            fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
             fontSize: '14px',
             fontWeight: 800,
             cursor: !root || judging ? 'not-allowed' : 'pointer',
@@ -205,7 +205,7 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
             borderRadius: '12px',
             background: judgeResult ? '#dcfce7' : '#fee2e2',
             border: `2px solid ${judgeResult ? '#86efac' : '#fca5a5'}`,
-            fontFamily: 'Nunito, sans-serif',
+            fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
             fontSize: '14px',
             fontWeight: 800,
             color: judgeResult ? '#166534' : '#991b1b',

@@ -42,7 +42,7 @@ export default function RootDropZone({ onSet, refNames }: Props) {
               border: 'none',
               background: isOver ? '#2563eb' : '#f1f5f9',
               color: isOver ? 'white' : '#64748b',
-              fontFamily: 'Nunito, sans-serif',
+              fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
               fontSize: '13px',
               fontWeight: 700,
               cursor: 'pointer',
@@ -59,7 +59,7 @@ export default function RootDropZone({ onSet, refNames }: Props) {
             />
           )}
         </div>
-        <div style={{ marginTop: '6px', fontSize: '11px', color: '#94a3b8', fontFamily: 'Nunito, sans-serif' }}>
+        <div style={{ marginTop: '6px', fontSize: '11px', color: '#94a3b8', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif' }}>
           またはパレットからドラッグ
         </div>
       </div>

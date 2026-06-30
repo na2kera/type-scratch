@@ -154,16 +154,16 @@ export default function TypePuzzleApp() {
         <div style={{ maxWidth: '1280px' }} className="mx-auto px-5 flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
             <div style={{ background: 'white', borderRadius: '8px', padding: '4px 10px', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }}>
-              <span style={{ color: '#2563eb', fontFamily: 'Fira Code, monospace', fontWeight: 700, fontSize: '13px', letterSpacing: '-0.5px' }}>TS</span>
+              <span style={{ color: '#2563eb', fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontWeight: 700, fontSize: '13px', letterSpacing: '-0.5px' }}>TS</span>
             </div>
-            <h1 style={{ fontFamily: 'Nunito, sans-serif', color: 'white', fontWeight: 900, fontSize: '20px', letterSpacing: '-0.5px', margin: 0 }}>
+            <h1 style={{ fontFamily: 'var(--font-fredoka), sans-serif', color: 'white', fontWeight: 700, fontSize: '22px', letterSpacing: '0.01em', margin: 0 }}>
               type-puzzle
             </h1>
           </div>
           <div className="flex items-center gap-4">
             <button
               onClick={openTutorial}
-              style={{ color: 'rgba(255,255,255,0.75)', fontSize: '13px', fontWeight: 600, fontFamily: 'Nunito, sans-serif', background: 'none', border: 'none', cursor: 'pointer' }}
+              style={{ color: 'rgba(255,255,255,0.75)', fontSize: '13px', fontWeight: 600, fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', background: 'none', border: 'none', cursor: 'pointer' }}
               className="hover:text-white transition-colors"
             >
               ? ヘルプ

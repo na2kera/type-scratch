@@ -31,7 +31,7 @@ export default function TrashDropZone() {
         boxShadow: isOver ? '0 8px 32px rgba(239,68,68,0.3)' : '0 4px 16px rgba(0,0,0,0.12)',
         transition: 'all 0.15s',
         userSelect: 'none',
-        fontFamily: 'Nunito, sans-serif',
+        fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
         fontWeight: 800,
         fontSize: '14px',
       }}

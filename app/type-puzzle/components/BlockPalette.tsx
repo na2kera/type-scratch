@@ -120,10 +120,10 @@ function PaletteItem({ kind, label, desc, onClick }: PaletteItemProps) {
         flexShrink: 0,
       }} />
       <div>
-        <div style={{ fontFamily: 'Fira Code, monospace', fontSize: '12px', fontWeight: 600, color: '#1e293b' }}>
+        <div style={{ fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontSize: '12px', fontWeight: 600, color: '#1e293b' }}>
           {label}
         </div>
-        <div style={{ fontSize: '10px', color: '#94a3b8', fontFamily: 'Nunito, sans-serif', marginTop: '1px' }}>
+        <div style={{ fontSize: '10px', color: '#94a3b8', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', marginTop: '1px' }}>
           {desc}
         </div>
       </div>
@@ -152,7 +152,7 @@ function RefItem({ dragId, label, bg, onClick, data }: RefItemProps) {
         background: bg,
         color: 'white',
         fontSize: '12px',
-        fontFamily: 'Fira Code, monospace',
+        fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
         fontWeight: 600,
         cursor: 'grab',
         opacity: isDragging ? 0.4 : 1,
@@ -183,7 +183,7 @@ export default function BlockPalette({ onSelect, onClose, inferNames = [], refNa
       overflowY: 'auto',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-        <span style={{ fontSize: '13px', fontWeight: 800, color: '#1e293b', fontFamily: 'Nunito, sans-serif' }}>ブロックを選ぶ</span>
+        <span style={{ fontSize: '13px', fontWeight: 800, color: '#1e293b', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif' }}>ブロックを選ぶ</span>
         <button
           onClick={onClose}
           style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '18px', lineHeight: 1, padding: '0 2px' }}
@@ -194,7 +194,7 @@ export default function BlockPalette({ onSelect, onClose, inferNames = [], refNa
 
       {(refNames.length > 0 || inferNames.length > 0) && (
         <div style={{ marginBottom: '10px', padding: '8px 10px', background: '#f8fafc', borderRadius: '8px' }}>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', fontFamily: 'Nunito, sans-serif' }}>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif' }}>
             参照
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
@@ -222,7 +222,7 @@ export default function BlockPalette({ onSelect, onClose, inferNames = [], refNa
         </div>
       )}
 
-      <div style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px', paddingLeft: '10px', fontFamily: 'Nunito, sans-serif' }}>
+      <div style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px', paddingLeft: '10px', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif' }}>
         ブロック
       </div>
       {BLOCK_OPTIONS.map(opt => (

@@ -34,7 +34,7 @@ const scratchInput: React.CSSProperties = {
   borderRadius: '6px',
   padding: '2px 8px',
   fontSize: '12px',
-  fontFamily: 'Fira Code, monospace',
+  fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
   fontWeight: 500,
   outline: 'none',
   minWidth: 0,
@@ -50,7 +50,7 @@ const scratchLabel: React.CSSProperties = {
   color: 'rgba(255,255,255,0.72)',
   fontSize: '11px',
   fontWeight: 700,
-  fontFamily: 'Nunito, sans-serif',
+  fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
   flexShrink: 0,
 };
 
@@ -113,7 +113,7 @@ function Slot({ slotRef, node, label, onSet, onRemove, rootNode, inferNames = []
       padding: '3px 10px',
       fontSize: '11px',
       fontWeight: 700,
-      fontFamily: 'Nunito, sans-serif',
+      fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
       borderRadius: '6px',
       border: '2px dashed',
       cursor: 'pointer',
@@ -310,7 +310,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
             {members.map((m, i) => (
               <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                {i > 0 && <span style={{ color: 'white', fontWeight: 900, fontSize: '14px', fontFamily: 'Fira Code, monospace' }}>{sep}</span>}
+                {i > 0 && <span style={{ color: 'white', fontWeight: 900, fontSize: '14px', fontFamily: 'var(--font-geist-mono), ui-monospace, monospace' }}>{sep}</span>}
                 <Slot
                   {...makeSlotProps(
                     { kind: 'list', parentId: node.id, slot: 'members', index: i },
@@ -339,7 +339,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
       case 'tuple':
         return (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
-            <span style={{ color: 'white', fontWeight: 900, fontFamily: 'Fira Code, monospace' }}>[</span>
+            <span style={{ color: 'white', fontWeight: 900, fontFamily: 'var(--font-geist-mono), ui-monospace, monospace' }}>[</span>
             {node.elements.map((e, i) => (
               <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 {i > 0 && <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>,</span>}
@@ -357,7 +357,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
               </div>
             ))}
             <Slot {...makeSlotProps({ kind: 'listAppend', parentId: node.id, slot: 'elements' }, null)} />
-            <span style={{ color: 'white', fontWeight: 900, fontFamily: 'Fira Code, monospace' }}>]</span>
+            <span style={{ color: 'white', fontWeight: 900, fontFamily: 'var(--font-geist-mono), ui-monospace, monospace' }}>]</span>
           </div>
         );
 
@@ -372,7 +372,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
                 () => onNodeUpdate(node.id, cur => ({ ...cur, element: null } as unknown as TypeNode))
               )}
             />
-            <span style={{ color: 'white', fontWeight: 900, fontFamily: 'Fira Code, monospace', fontSize: '13px' }}>[ ]</span>
+            <span style={{ color: 'white', fontWeight: 900, fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontSize: '13px' }}>[ ]</span>
           </div>
         );
 
@@ -395,9 +395,9 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
         return (
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
             <Slot {...makeSlotProps({ kind: 'single', parentId: node.id, slot: 'target' }, node.target, '対象')} />
-            <span style={{ color: 'white', fontWeight: 900, fontFamily: 'Fira Code, monospace' }}>[</span>
+            <span style={{ color: 'white', fontWeight: 900, fontFamily: 'var(--font-geist-mono), ui-monospace, monospace' }}>[</span>
             <Slot {...makeSlotProps({ kind: 'single', parentId: node.id, slot: 'key' }, node.key, 'キー')} />
-            <span style={{ color: 'white', fontWeight: 900, fontFamily: 'Fira Code, monospace' }}>]</span>
+            <span style={{ color: 'white', fontWeight: 900, fontFamily: 'var(--font-geist-mono), ui-monospace, monospace' }}>]</span>
           </div>
         );
 
@@ -434,7 +434,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
               <Slot {...makeSlotProps({ kind: 'single', parentId: node.id, slot: 'check' }, node.check, 'check')} />
-              <span style={{ color: 'white', fontWeight: 900, fontFamily: 'Fira Code, monospace', fontSize: '12px' }}>extends</span>
+              <span style={{ color: 'white', fontWeight: 900, fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontSize: '12px' }}>extends</span>
               <Slot {...makeSlotProps(
                 { kind: 'single', parentId: node.id, slot: 'extends' },
                 node.extends,
@@ -444,7 +444,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
               )} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-              <span style={{ color: 'white', fontWeight: 900, fontFamily: 'Fira Code, monospace' }}>?</span>
+              <span style={{ color: 'white', fontWeight: 900, fontFamily: 'var(--font-geist-mono), ui-monospace, monospace' }}>?</span>
               <Slot {...makeSlotProps(
                 { kind: 'single', parentId: node.id, slot: 'trueBranch' },
                 node.trueBranch,
@@ -452,7 +452,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
                 undefined,
                 { inferNamesOverride: allInferNames }
               )} />
-              <span style={{ color: 'white', fontWeight: 900, fontFamily: 'Fira Code, monospace' }}>:</span>
+              <span style={{ color: 'white', fontWeight: 900, fontFamily: 'var(--font-geist-mono), ui-monospace, monospace' }}>:</span>
               <Slot {...makeSlotProps(
                 { kind: 'single', parentId: node.id, slot: 'falseBranch' },
                 node.falseBranch,
@@ -491,7 +491,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
       case 'templateLiteral':
         return (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center' }}>
-            <span style={{ color: 'white', fontFamily: 'Fira Code, monospace', fontWeight: 700 }}>`</span>
+            <span style={{ color: 'white', fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontWeight: 700 }}>`</span>
             {node.parts.map((part, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 {typeof part === 'string' ? (
@@ -507,7 +507,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
                   />
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                    <span style={{ color: 'white', fontFamily: 'Fira Code, monospace', fontSize: '12px' }}>{'${'}</span>
+                    <span style={{ color: 'white', fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontSize: '12px' }}>{'${'}</span>
                     <Slot
                       {...makeSlotProps(
                         { kind: 'list', parentId: node.id, slot: 'parts', index: i },
@@ -519,12 +519,12 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
                         })
                       )}
                     />
-                    <span style={{ color: 'white', fontFamily: 'Fira Code, monospace', fontSize: '12px' }}>{'}'}</span>
+                    <span style={{ color: 'white', fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontSize: '12px' }}>{'}'}</span>
                   </div>
                 )}
               </div>
             ))}
-            <span style={{ color: 'white', fontFamily: 'Fira Code, monospace', fontWeight: 700 }}>`</span>
+            <span style={{ color: 'white', fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontWeight: 700 }}>`</span>
             <div style={{ display: 'flex', gap: '4px' }}>
               <button
                 onClick={() => onNodeUpdate(node.id, cur => {
@@ -551,7 +551,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
       case 'ref':
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ color: 'white', fontFamily: 'Fira Code, monospace', fontWeight: 700, fontSize: '13px' }}>{node.name}</span>
+            <span style={{ color: 'white', fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontWeight: 700, fontSize: '13px' }}>{node.name}</span>
           </div>
         );
 
@@ -588,11 +588,10 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
           <span style={{
             color: 'rgba(255,255,255,0.95)',
-            fontSize: '11px',
-            fontWeight: 800,
-            fontFamily: 'Nunito, sans-serif',
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
+            fontSize: '13px',
+            fontWeight: 600,
+            fontFamily: 'var(--font-fredoka), sans-serif',
+            letterSpacing: '0.02em',
             flexShrink: 0,
           }}>
             {config.label}
@@ -644,7 +643,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
             padding: '4px 12px',
           }}>
             <div style={{
-              fontFamily: 'Fira Code, monospace',
+              fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
               fontSize: '11px',
               color: '#fecaca',
               display: 'flex',
@@ -667,7 +666,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
               overflowY: 'auto',
               background: '#1e293b',
               color: '#fca5a5',
-              fontFamily: 'Fira Code, monospace',
+              fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
               fontSize: '11px',
               borderRadius: '8px',
               padding: '10px 12px',
@@ -686,7 +685,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
             padding: '4px 12px',
           }}>
             <div style={{
-              fontFamily: 'Fira Code, monospace',
+              fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
               fontSize: '11px',
               color: 'rgba(255,255,255,0.8)',
               display: 'flex',
@@ -710,7 +709,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
                 overflowY: 'auto',
                 background: '#1e293b',
                 color: '#86efac',
-                fontFamily: 'Fira Code, monospace',
+                fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
                 fontSize: '11px',
                 borderRadius: '8px',
                 padding: '10px 12px',
