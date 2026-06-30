@@ -7,6 +7,7 @@ import TreeDndContext from './TreeDndContext';
 import RootDropZone from './RootDropZone';
 import UndoControls from './UndoControls';
 import CodePreview from './CodePreview';
+import BlockShelf from './BlockPalette';
 
 interface Props {
   typeResult?: TypeResultMap;
@@ -27,29 +28,29 @@ export default function SandboxPanel({ typeResult, root, onRootChange, baseRows,
   const refNames = ['T'];
 
   return (
-    <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-      {/* Left: base type editor */}
-      <div style={{ width: '240px', flexShrink: 0 }}>
-        <BaseTypeEditor rows={baseRows} onChange={onBaseRowsChange} />
-      </div>
-
-      {/* Right: canvas */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-          <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '12px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            ブロックツリー
-          </span>
-          <UndoControls
-            onUndo={onUndo}
-            onRedo={onRedo}
-            canUndo={canUndo}
-            canRedo={canRedo}
-            onReset={() => onRootChange(null)}
-            hasRoot={!!root}
-          />
+    <TreeDndContext root={root} onRootChange={onRootChange} typeResult={typeResult} onNodeUpdate={onNodeUpdate} refNames={refNames}>
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+        {/* Left: base type editor */}
+        <div style={{ width: '240px', flexShrink: 0 }}>
+          <BaseTypeEditor rows={baseRows} onChange={onBaseRowsChange} />
         </div>
 
-        <TreeDndContext root={root} onRootChange={onRootChange} typeResult={typeResult} onNodeUpdate={onNodeUpdate} refNames={refNames}>
+        {/* Right: canvas */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '12px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              ブロックツリー
+            </span>
+            <UndoControls
+              onUndo={onUndo}
+              onRedo={onRedo}
+              canUndo={canUndo}
+              canRedo={canRedo}
+              onReset={() => onRootChange(null)}
+              hasRoot={!!root}
+            />
+          </div>
+
           {root ? (
             <NodeCard
               node={root}
@@ -61,55 +62,56 @@ export default function SandboxPanel({ typeResult, root, onRootChange, baseRows,
               isRoot
             />
           ) : (
-            <RootDropZone onSet={onRootChange} refNames={refNames} />
+            <RootDropZone />
           )}
-        </TreeDndContext>
 
-        {/* Output result */}
-        {outputResult && (
-          <div style={{
-            marginTop: '16px',
-            borderRadius: '12px',
-            overflow: 'hidden',
-            border: `2px solid ${outputResult.errors.length > 0 ? '#fecaca' : '#bbf7d0'}`,
-          }}>
+          {/* Output result */}
+          {outputResult && (
             <div style={{
-              background: outputResult.errors.length > 0 ? '#fee2e2' : '#dcfce7',
-              padding: '6px 14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
+              marginTop: '16px',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              border: `2px solid ${outputResult.errors.length > 0 ? '#fecaca' : '#bbf7d0'}`,
             }}>
-              <span style={{ fontSize: '14px' }}>{outputResult.errors.length > 0 ? '!' : '✓'}</span>
-              <span style={{
-                fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
-                fontSize: '11px',
-                fontWeight: 800,
-                color: outputResult.errors.length > 0 ? '#991b1b' : '#166534',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
+              <div style={{
+                background: outputResult.errors.length > 0 ? '#fee2e2' : '#dcfce7',
+                padding: '6px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}>
-                {outputResult.errors.length > 0 ? 'エラー' : '結果'}
-              </span>
+                <span style={{ fontSize: '14px' }}>{outputResult.errors.length > 0 ? '!' : '✓'}</span>
+                <span style={{
+                  fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  color: outputResult.errors.length > 0 ? '#991b1b' : '#166534',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                }}>
+                  {outputResult.errors.length > 0 ? 'エラー' : '結果'}
+                </span>
+              </div>
+              <div style={{
+                background: '#1e293b',
+                padding: '12px 14px',
+                fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
+                fontSize: '12px',
+                color: outputResult.errors.length > 0 ? '#fca5a5' : '#86efac',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all',
+                lineHeight: 1.6,
+              }}>
+                {outputResult.errors.length > 0 ? outputResult.errors[0].split('\n')[0] : outputResult.displayString}
+              </div>
             </div>
-            <div style={{
-              background: '#1e293b',
-              padding: '12px 14px',
-              fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
-              fontSize: '12px',
-              color: outputResult.errors.length > 0 ? '#fca5a5' : '#86efac',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-all',
-              lineHeight: 1.6,
-            }}>
-              {outputResult.errors.length > 0 ? outputResult.errors[0].split('\n')[0] : outputResult.displayString}
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* Generated code preview */}
-        <CodePreview source={codeSource} />
+          {/* Generated code preview */}
+          <CodePreview source={codeSource} />
+        </div>
       </div>
-    </div>
+      <BlockShelf refNames={refNames} />
+    </TreeDndContext>
   );
 }

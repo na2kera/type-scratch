@@ -1,18 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { TypeNode } from '../lib/types';
 import { serializeSlotRef } from '../lib/tree-ops';
-import BlockPalette from './BlockPalette';
 import { useDroppable } from '@dnd-kit/core';
 
-interface Props {
-  onSet: (n: TypeNode) => void;
-  refNames: string[];
-}
-
-export default function RootDropZone({ onSet, refNames }: Props) {
-  const [showPalette, setShowPalette] = useState(false);
+export default function RootDropZone() {
   const slotId = serializeSlotRef({ kind: 'root' });
   const { isOver, setNodeRef } = useDroppable({ id: slotId });
 
@@ -33,34 +24,21 @@ export default function RootDropZone({ onSet, refNames }: Props) {
     >
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: '28px', marginBottom: '8px', opacity: 0.4 }}>⊞</div>
-        <div style={{ position: 'relative', display: 'inline-block' }}>
-          <button
-            onClick={() => setShowPalette(s => !s)}
-            style={{
-              padding: '8px 20px',
-              borderRadius: '10px',
-              border: 'none',
-              background: isOver ? '#2563eb' : '#f1f5f9',
-              color: isOver ? 'white' : '#64748b',
-              fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
-              fontSize: '13px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
-          >
-            {isOver ? 'ここにドロップ' : '+ ルートブロックを選ぶ'}
-          </button>
-          {showPalette && (
-            <BlockPalette
-              onSelect={onSet}
-              onClose={() => setShowPalette(false)}
-              refNames={refNames}
-            />
-          )}
+        <div style={{
+          display: 'inline-flex',
+          padding: '8px 20px',
+          borderRadius: '10px',
+          background: isOver ? '#2563eb' : '#f1f5f9',
+          color: isOver ? 'white' : '#64748b',
+          fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
+          fontSize: '13px',
+          fontWeight: 700,
+          transition: 'all 0.15s',
+        }}>
+          {isOver ? 'ここにドロップ' : 'ルートブロックを置く'}
         </div>
         <div style={{ marginTop: '6px', fontSize: '11px', color: '#94a3b8', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif' }}>
-          またはパレットからドラッグ
+          下のブロック棚からドラッグしてください
         </div>
       </div>
     </div>

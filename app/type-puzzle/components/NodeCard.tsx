@@ -1,11 +1,9 @@
 'use client';
 
-import { useState, useRef } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { TypeNode, NodeId, SlotRef, TypeResultMap } from '../lib/types';
 import { newId, collectInferNamesInExtends } from '../lib/nodes';
 import { serializeSlotRef } from '../lib/tree-ops';
-import BlockPalette from './BlockPalette';
 import { useDragState } from './DragStateContext';
 
 // Scratch-style block colors — one strong color per type
@@ -58,7 +56,6 @@ interface SlotProps {
   slotRef: SlotRef;
   node: TypeNode | null;
   label?: string;
-  onSet: (node: TypeNode) => void;
   onRemove?: () => void;
   rootNode: TypeNode | null;
   inferNames?: string[];
@@ -68,9 +65,7 @@ interface SlotProps {
   onNodeUpdate: (id: NodeId, updater: (node: TypeNode) => TypeNode) => void;
 }
 
-function Slot({ slotRef, node, label, onSet, onRemove, rootNode, inferNames = [], refNames = [], insideExtends = false, typeResult, onNodeUpdate }: SlotProps) {
-  const [showPalette, setShowPalette] = useState(false);
-  const paletteRef = useRef<HTMLDivElement>(null);
+function Slot({ slotRef, node, label, onRemove, rootNode, inferNames = [], refNames = [], insideExtends = false, typeResult, onNodeUpdate }: SlotProps) {
   const slotId = serializeSlotRef(slotRef);
 
   const { isOver, setNodeRef: setDropRef } = useDroppable({ id: slotId });
@@ -102,7 +97,6 @@ function Slot({ slotRef, node, label, onSet, onRemove, rootNode, inferNames = []
           insideExtends={insideExtends}
           typeResult={typeResult}
           onNodeUpdate={onNodeUpdate}
-          onSet={onSet}
         />
       </div>
     );
@@ -116,7 +110,6 @@ function Slot({ slotRef, node, label, onSet, onRemove, rootNode, inferNames = []
       fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
       borderRadius: '6px',
       border: '2px dashed',
-      cursor: 'pointer',
       transition: 'all 0.1s',
     };
     if (isOver && validity === 'valid-empty') {
@@ -131,20 +124,10 @@ function Slot({ slotRef, node, label, onSet, onRemove, rootNode, inferNames = []
   return (
     <div ref={setDropRef} style={{ display: 'inline-block' }}>
       {label && <span style={scratchLabel} className="mr-1">{label}</span>}
-      <div style={{ position: 'relative', display: 'inline-block' }}>
-        <button onClick={() => setShowPalette(s => !s)} style={emptyStyle}>
-          {isOver && validity === 'valid-empty' ? 'ここにドロップ' : '+ ブロックを選ぶ'}
-        </button>
-        {showPalette && (
-          <div ref={paletteRef}>
-            <BlockPalette
-              onSelect={onSet}
-              onClose={() => setShowPalette(false)}
-              inferNames={inferNames}
-              refNames={refNames}
-            />
-          </div>
-        )}
+      <div style={{ display: 'inline-block' }}>
+        <div style={emptyStyle}>
+          {isOver && validity === 'valid-empty' ? 'ここにドロップ' : 'ブロックを置く'}
+        </div>
       </div>
     </div>
   );
@@ -159,11 +142,10 @@ interface NodeCardProps {
   insideExtends?: boolean;
   typeResult?: TypeResultMap;
   onNodeUpdate: (id: NodeId, updater: (node: TypeNode) => TypeNode) => void;
-  onSet?: (node: TypeNode) => void;
   isRoot?: boolean;
 }
 
-export default function NodeCard({ node, rootNode, onRemove, inferNames = [], refNames = [], insideExtends = false, typeResult, onNodeUpdate, onSet, isRoot = false }: NodeCardProps) {
+export default function NodeCard({ node, rootNode, onRemove, inferNames = [], refNames = [], insideExtends = false, typeResult, onNodeUpdate, isRoot = false }: NodeCardProps) {
   const config = KIND_CONFIG[node.kind] ?? { bg: '#64748b', label: node.kind };
   const result = typeResult?.[node.id];
 
@@ -177,7 +159,6 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
       slotRef,
       node: child,
       label,
-      onSet: (n) => onNodeUpdate(node.id, (cur) => setSlot(cur, slotRef, n)),
       onRemove: removeChild,
       rootNode,
       inferNames: opts?.inferNamesOverride ?? inferNames,
@@ -186,13 +167,6 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
       typeResult,
       onNodeUpdate,
     };
-  }
-
-  function setSlot(cur: TypeNode, slotRef: SlotRef, newNode: TypeNode): TypeNode {
-    if (slotRef.kind === 'single') {
-      return { ...cur, [slotRef.slot]: newNode } as TypeNode;
-    }
-    return cur;
   }
 
   // Drag/delete button styles (white icons on colored bg)

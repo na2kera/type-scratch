@@ -8,6 +8,7 @@ import TreeDndContext from './TreeDndContext';
 import RootDropZone from './RootDropZone';
 import UndoControls from './UndoControls';
 import CodePreview from './CodePreview';
+import BlockShelf from './BlockPalette';
 
 interface Props {
   typeResult?: TypeResultMap;
@@ -175,54 +176,55 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
             isRoot
           />
         ) : (
-          <RootDropZone onSet={onRootChange} refNames={refNames} />
+          <RootDropZone />
         )}
+
+        {/* Judge section */}
+        <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            onClick={handleJudge}
+            disabled={!root || judging}
+            style={{
+              padding: '10px 28px',
+              borderRadius: '12px',
+              border: 'none',
+              background: !root || judging ? '#e2e8f0' : '#2563eb',
+              color: !root || judging ? '#94a3b8' : 'white',
+              fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
+              fontSize: '14px',
+              fontWeight: 800,
+              cursor: !root || judging ? 'not-allowed' : 'pointer',
+              transition: 'all 0.15s',
+              boxShadow: !root || judging ? 'none' : '0 4px 12px rgba(37,99,235,0.35)',
+            }}
+          >
+            {judging ? '⏳ 判定中...' : '✓ 判定する'}
+          </button>
+
+          {judgeResult !== null && (
+            <div style={{
+              padding: '10px 20px',
+              borderRadius: '12px',
+              background: judgeResult ? '#dcfce7' : '#fee2e2',
+              border: `2px solid ${judgeResult ? '#86efac' : '#fca5a5'}`,
+              fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
+              fontSize: '14px',
+              fontWeight: 800,
+              color: judgeResult ? '#166534' : '#991b1b',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}>
+              <span style={{ fontSize: '18px' }}>{judgeResult ? '🎉' : '😅'}</span>
+              {judgeResult ? '正解！' : 'もう一度試してみてください'}
+            </div>
+          )}
+        </div>
+
+        {/* Generated code preview */}
+        <CodePreview source={codeSource} />
+        <BlockShelf refNames={refNames} />
       </TreeDndContext>
-
-      {/* Judge section */}
-      <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <button
-          onClick={handleJudge}
-          disabled={!root || judging}
-          style={{
-            padding: '10px 28px',
-            borderRadius: '12px',
-            border: 'none',
-            background: !root || judging ? '#e2e8f0' : '#2563eb',
-            color: !root || judging ? '#94a3b8' : 'white',
-            fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
-            fontSize: '14px',
-            fontWeight: 800,
-            cursor: !root || judging ? 'not-allowed' : 'pointer',
-            transition: 'all 0.15s',
-            boxShadow: !root || judging ? 'none' : '0 4px 12px rgba(37,99,235,0.35)',
-          }}
-        >
-          {judging ? '⏳ 判定中...' : '✓ 判定する'}
-        </button>
-
-        {judgeResult !== null && (
-          <div style={{
-            padding: '10px 20px',
-            borderRadius: '12px',
-            background: judgeResult ? '#dcfce7' : '#fee2e2',
-            border: `2px solid ${judgeResult ? '#86efac' : '#fca5a5'}`,
-            fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
-            fontSize: '14px',
-            fontWeight: 800,
-            color: judgeResult ? '#166534' : '#991b1b',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}>
-            <span style={{ fontSize: '18px' }}>{judgeResult ? '🎉' : '😅'}</span>
-            {judgeResult ? '正解！' : 'もう一度試してみてください'}
-          </div>
-        )}
-      </div>
-
-      {/* Generated code preview */}
-      <CodePreview source={codeSource} />
     </div>
   );
 }
