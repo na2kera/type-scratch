@@ -1,14 +1,91 @@
 'use client';
 
+import { useRef, useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { TypeNode, NodeKind } from '../lib/types';
 import { newId } from '../lib/nodes';
 
 interface Props {
-  onSelect: (node: TypeNode) => void;
-  onClose: () => void;
   inferNames?: string[];
   refNames?: string[];
+}
+
+const EXPANDED_SPACER = 282;
+const COLLAPSED_SPACER = 50;
+const DRAG_THRESHOLD = 48;
+
+function useShelfDrag(collapsed: boolean, setCollapsed: (v: boolean) => void) {
+  const [dragY, setDragY] = useState(0);
+  const startRef = useRef<{ y: number; collapsed: boolean } | null>(null);
+
+  function onPointerDown(e: React.PointerEvent) {
+    startRef.current = { y: e.clientY, collapsed };
+    setDragY(0);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+
+  function onPointerMove(e: React.PointerEvent) {
+    if (!startRef.current) return;
+    const delta = e.clientY - startRef.current.y;
+    if (startRef.current.collapsed) {
+      setDragY(Math.min(0, delta));
+    } else {
+      setDragY(Math.max(0, delta));
+    }
+  }
+
+  function onPointerUp(e: React.PointerEvent) {
+    if (!startRef.current) return;
+    const delta = e.clientY - startRef.current.y;
+    if (startRef.current.collapsed) {
+      if (delta < -DRAG_THRESHOLD) setCollapsed(false);
+    } else if (delta > DRAG_THRESHOLD) {
+      setCollapsed(true);
+    }
+    startRef.current = null;
+    setDragY(0);
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+  }
+
+  function onPointerCancel(e: React.PointerEvent) {
+    startRef.current = null;
+    setDragY(0);
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+  }
+
+  return { dragY, onPointerDown, onPointerMove, onPointerUp, onPointerCancel };
+}
+
+function ShelfDragHandle({ handlers }: {
+  handlers: ReturnType<typeof useShelfDrag>;
+}) {
+  return (
+    <div
+      onPointerDown={handlers.onPointerDown}
+      onPointerMove={handlers.onPointerMove}
+      onPointerUp={handlers.onPointerUp}
+      onPointerCancel={handlers.onPointerCancel}
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        padding: '8px 0 12px',
+        cursor: 'grab',
+        touchAction: 'none',
+        userSelect: 'none',
+      }}
+    >
+      <div style={{
+        width: '40px',
+        height: '5px',
+        borderRadius: '999px',
+        background: '#cbd5e1',
+      }} />
+    </div>
+  );
 }
 
 const KIND_BG: Record<string, string> = {
@@ -83,10 +160,9 @@ interface PaletteItemProps {
   kind: NodeKind;
   label: string;
   desc: string;
-  onClick: () => void;
 }
 
-function PaletteItem({ kind, label, desc, onClick }: PaletteItemProps) {
+function PaletteItem({ kind, label, desc }: PaletteItemProps) {
   const bg = KIND_BG[kind] ?? '#64748b';
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `palette:${kind}`,
@@ -99,31 +175,37 @@ function PaletteItem({ kind, label, desc, onClick }: PaletteItemProps) {
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '8px',
-        padding: '6px 10px',
-        borderRadius: '8px',
+        gap: '12px',
+        padding: '18px 16px',
+        borderRadius: '12px',
+        background: 'white',
+        border: '1.5px solid #e2e8f0',
+        boxShadow: '0 2px 6px rgba(15,23,42,0.06)',
         cursor: 'grab',
         opacity: isDragging ? 0.4 : 1,
-        transition: 'opacity 0.1s, background 0.1s',
+        transition: 'opacity 0.1s, transform 0.1s, box-shadow 0.1s',
         userSelect: 'none',
+        flex: '0 0 auto',
+        minWidth: '160px',
+        minHeight: '87px',
+        touchAction: 'none',
       }}
-      className="hover:bg-slate-50"
+      className="hover:-translate-y-0.5 hover:shadow-md"
       {...listeners}
       {...attributes}
-      onClick={onClick}
     >
       <div style={{
         width: '10px',
-        height: '28px',
+        height: '60px',
         borderRadius: '4px',
         background: bg,
         flexShrink: 0,
       }} />
       <div>
-        <div style={{ fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontSize: '12px', fontWeight: 600, color: '#1e293b' }}>
+        <div style={{ fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>
           {label}
         </div>
-        <div style={{ fontSize: '10px', color: '#94a3b8', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', marginTop: '1px' }}>
+        <div style={{ fontSize: '12px', color: '#94a3b8', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', marginTop: '3px' }}>
           {desc}
         </div>
       </div>
@@ -135,11 +217,10 @@ interface RefItemProps {
   dragId: string;
   label: string;
   bg: string;
-  onClick: () => void;
   data: Record<string, unknown>;
 }
 
-function RefItem({ dragId, label, bg, onClick, data }: RefItemProps) {
+function RefItem({ dragId, label, bg, data }: RefItemProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: dragId, data });
   return (
     <div
@@ -147,93 +228,138 @@ function RefItem({ dragId, label, bg, onClick, data }: RefItemProps) {
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        padding: '3px 10px',
+        padding: '12px 18px',
         borderRadius: '20px',
         background: bg,
         color: 'white',
-        fontSize: '12px',
+        fontSize: '14px',
         fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
         fontWeight: 600,
         cursor: 'grab',
         opacity: isDragging ? 0.4 : 1,
         userSelect: 'none',
-        margin: '2px',
+        flex: '0 0 auto',
+        boxShadow: '0 2px 6px rgba(15,23,42,0.12)',
+        touchAction: 'none',
       }}
       {...listeners}
       {...attributes}
-      onClick={onClick}
     >
       {label}
     </div>
   );
 }
 
-export default function BlockPalette({ onSelect, onClose, inferNames = [], refNames = [] }: Props) {
+export default function BlockShelf({ inferNames = [], refNames = [] }: Props) {
+  const [collapsed, setCollapsed] = useState(false);
+  const shelfDrag = useShelfDrag(collapsed, setCollapsed);
+  const spacerHeight = collapsed ? `${COLLAPSED_SPACER}px` : `${EXPANDED_SPACER}px`;
+
   return (
-    <div style={{
-      position: 'absolute',
-      zIndex: 50,
-      background: 'white',
-      border: '1px solid #e2e8f0',
-      borderRadius: '14px',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-      padding: '12px',
-      minWidth: '240px',
-      maxHeight: '420px',
-      overflowY: 'auto',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-        <span style={{ fontSize: '13px', fontWeight: 800, color: '#1e293b', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif' }}>ブロックを選ぶ</span>
-        <button
-          onClick={onClose}
-          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '18px', lineHeight: 1, padding: '0 2px' }}
-        >
-          ×
-        </button>
-      </div>
+    <>
+      <div style={{ height: spacerHeight, transition: shelfDrag.dragY === 0 ? 'height 0.2s ease' : 'none' }} />
+      <div style={{
+        position: 'fixed',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 40,
+        background: 'rgba(248,250,252,0.96)',
+        borderTop: '1.5px solid #cbd5e1',
+        boxShadow: '0 -8px 28px rgba(15,23,42,0.12)',
+        backdropFilter: 'blur(10px)',
+        padding: collapsed ? '0 20px 10px' : '0 20px 24px',
+        transform: shelfDrag.dragY !== 0 ? `translateY(${shelfDrag.dragY}px)` : undefined,
+        transition: shelfDrag.dragY === 0 ? 'transform 0.2s ease' : 'none',
+      }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+          <ShelfDragHandle handlers={shelfDrag} />
+          {collapsed ? (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '4px 12px 6px',
+              borderRadius: '10px',
+              border: '1.5px dashed #cbd5e1',
+              background: 'white',
+              color: '#64748b',
+              fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
+              fontSize: '12px',
+              fontWeight: 800,
+            }}>
+              ブロック棚
+            </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px', minWidth: 0 }}>
+                <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>
+                  ブロック棚
+                </span>
+                <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '11px', color: '#94a3b8', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  下からドラッグして、空いている場所に置きます
+                </span>
+              </div>
 
-      {(refNames.length > 0 || inferNames.length > 0) && (
-        <div style={{ marginBottom: '10px', padding: '8px 10px', background: '#f8fafc', borderRadius: '8px' }}>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif' }}>
-            参照
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-            {refNames.map(name => (
-              <RefItem
-                key={`ref-${name}`}
-                dragId={`palette:ref:${name}`}
-                label={name}
-                bg="#475569"
-                data={{ source: 'palette', kind: 'ref', name }}
-                onClick={() => { onSelect({ id: newId(), kind: 'ref', name }); onClose(); }}
-              />
-            ))}
-            {inferNames.map(name => (
-              <RefItem
-                key={`infer-${name}`}
-                dragId={`palette:infer:${name}`}
-                label={`infer ${name}`}
-                bg="#9333ea"
-                data={{ source: 'palette', kind: 'infer', name }}
-                onClick={() => { onSelect({ id: newId(), kind: 'infer', name }); onClose(); }}
-              />
-            ))}
-          </div>
+              <div style={{
+                display: 'flex',
+                flexWrap: 'nowrap',
+                alignItems: 'center',
+                gap: '12px',
+                overflowX: 'auto',
+                overflowY: 'hidden',
+                minHeight: '87px',
+                paddingBottom: '6px',
+                WebkitOverflowScrolling: 'touch',
+              }}>
+                {(refNames.length > 0 || inferNames.length > 0) && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '12px 16px',
+                    background: '#e2e8f0',
+                    borderRadius: '12px',
+                    minHeight: '87px',
+                    flex: '0 0 auto',
+                  }}>
+                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif' }}>
+                      参照
+                    </span>
+                    {refNames.map(name => (
+                      <RefItem
+                        key={`ref-${name}`}
+                        dragId={`palette:ref:${name}`}
+                        label={name}
+                        bg="#475569"
+                        data={{ source: 'palette', kind: 'ref', name }}
+                      />
+                    ))}
+                    {inferNames.map(name => (
+                      <RefItem
+                        key={`infer-${name}`}
+                        dragId={`palette:infer:${name}`}
+                        label={`infer ${name}`}
+                        bg="#9333ea"
+                        data={{ source: 'palette', kind: 'infer', name }}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {BLOCK_OPTIONS.map(opt => (
+                  <PaletteItem
+                    key={opt.kind}
+                    kind={opt.kind}
+                    label={opt.label}
+                    desc={opt.desc}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
-      )}
-
-      <div style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px', paddingLeft: '10px', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif' }}>
-        ブロック
       </div>
-      {BLOCK_OPTIONS.map(opt => (
-        <PaletteItem
-          key={opt.kind}
-          kind={opt.kind}
-          label={opt.label}
-          desc={opt.desc}
-          onClick={() => { onSelect(createDefaultNode(opt.kind)); onClose(); }}
-        />
-      ))}
-    </div>
+    </>
   );
 }
