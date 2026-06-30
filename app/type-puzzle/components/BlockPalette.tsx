@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { TypeNode, NodeKind } from '../lib/types';
 import { newId } from '../lib/nodes';
@@ -8,6 +8,84 @@ import { newId } from '../lib/nodes';
 interface Props {
   inferNames?: string[];
   refNames?: string[];
+}
+
+const EXPANDED_SPACER = 282;
+const COLLAPSED_SPACER = 50;
+const DRAG_THRESHOLD = 48;
+
+function useShelfDrag(collapsed: boolean, setCollapsed: (v: boolean) => void) {
+  const [dragY, setDragY] = useState(0);
+  const startRef = useRef<{ y: number; collapsed: boolean } | null>(null);
+
+  function onPointerDown(e: React.PointerEvent) {
+    startRef.current = { y: e.clientY, collapsed };
+    setDragY(0);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+
+  function onPointerMove(e: React.PointerEvent) {
+    if (!startRef.current) return;
+    const delta = e.clientY - startRef.current.y;
+    if (startRef.current.collapsed) {
+      setDragY(Math.min(0, delta));
+    } else {
+      setDragY(Math.max(0, delta));
+    }
+  }
+
+  function onPointerUp(e: React.PointerEvent) {
+    if (!startRef.current) return;
+    const delta = e.clientY - startRef.current.y;
+    if (startRef.current.collapsed) {
+      if (delta < -DRAG_THRESHOLD) setCollapsed(false);
+    } else if (delta > DRAG_THRESHOLD) {
+      setCollapsed(true);
+    }
+    startRef.current = null;
+    setDragY(0);
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+  }
+
+  function onPointerCancel(e: React.PointerEvent) {
+    startRef.current = null;
+    setDragY(0);
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+  }
+
+  return { dragY, onPointerDown, onPointerMove, onPointerUp, onPointerCancel };
+}
+
+function ShelfDragHandle({ handlers }: {
+  handlers: ReturnType<typeof useShelfDrag>;
+}) {
+  return (
+    <div
+      onPointerDown={handlers.onPointerDown}
+      onPointerMove={handlers.onPointerMove}
+      onPointerUp={handlers.onPointerUp}
+      onPointerCancel={handlers.onPointerCancel}
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        padding: '8px 0 12px',
+        cursor: 'grab',
+        touchAction: 'none',
+        userSelect: 'none',
+      }}
+    >
+      <div style={{
+        width: '40px',
+        height: '5px',
+        borderRadius: '999px',
+        background: '#cbd5e1',
+      }} />
+    </div>
+  );
 }
 
 const KIND_BG: Record<string, string> = {
@@ -97,8 +175,8 @@ function PaletteItem({ kind, label, desc }: PaletteItemProps) {
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '10px',
-        padding: '12px 14px',
+        gap: '12px',
+        padding: '18px 16px',
         borderRadius: '12px',
         background: 'white',
         border: '1.5px solid #e2e8f0',
@@ -109,7 +187,7 @@ function PaletteItem({ kind, label, desc }: PaletteItemProps) {
         userSelect: 'none',
         flex: '0 0 auto',
         minWidth: '160px',
-        minHeight: '58px',
+        minHeight: '87px',
         touchAction: 'none',
       }}
       className="hover:-translate-y-0.5 hover:shadow-md"
@@ -118,16 +196,16 @@ function PaletteItem({ kind, label, desc }: PaletteItemProps) {
     >
       <div style={{
         width: '10px',
-        height: '40px',
+        height: '60px',
         borderRadius: '4px',
         background: bg,
         flexShrink: 0,
       }} />
       <div>
-        <div style={{ fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
+        <div style={{ fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>
           {label}
         </div>
-        <div style={{ fontSize: '11px', color: '#94a3b8', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', marginTop: '2px' }}>
+        <div style={{ fontSize: '12px', color: '#94a3b8', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', marginTop: '3px' }}>
           {desc}
         </div>
       </div>
@@ -150,11 +228,11 @@ function RefItem({ dragId, label, bg, data }: RefItemProps) {
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        padding: '8px 14px',
+        padding: '12px 18px',
         borderRadius: '20px',
         background: bg,
         color: 'white',
-        fontSize: '13px',
+        fontSize: '14px',
         fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
         fontWeight: 600,
         cursor: 'grab',
@@ -174,11 +252,12 @@ function RefItem({ dragId, label, bg, data }: RefItemProps) {
 
 export default function BlockShelf({ inferNames = [], refNames = [] }: Props) {
   const [collapsed, setCollapsed] = useState(false);
-  const spacerHeight = collapsed ? '46px' : '188px';
+  const shelfDrag = useShelfDrag(collapsed, setCollapsed);
+  const spacerHeight = collapsed ? `${COLLAPSED_SPACER}px` : `${EXPANDED_SPACER}px`;
 
   return (
     <>
-      <div style={{ height: spacerHeight }} />
+      <div style={{ height: spacerHeight, transition: shelfDrag.dragY === 0 ? 'height 0.2s ease' : 'none' }} />
       <div style={{
         position: 'fixed',
         left: 0,
@@ -189,79 +268,59 @@ export default function BlockShelf({ inferNames = [], refNames = [] }: Props) {
         borderTop: '1.5px solid #cbd5e1',
         boxShadow: '0 -8px 28px rgba(15,23,42,0.12)',
         backdropFilter: 'blur(10px)',
-        padding: collapsed ? '10px 20px' : '14px 20px 16px',
+        padding: collapsed ? '0 20px 10px' : '0 20px 24px',
+        transform: shelfDrag.dragY !== 0 ? `translateY(${shelfDrag.dragY}px)` : undefined,
+        transition: shelfDrag.dragY === 0 ? 'transform 0.2s ease' : 'none',
       }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+          <ShelfDragHandle handlers={shelfDrag} />
           {collapsed ? (
-            <button
-              onClick={() => setCollapsed(false)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                width: '100%',
-                padding: '6px 12px',
-                borderRadius: '10px',
-                border: '1.5px dashed #cbd5e1',
-                background: 'white',
-                color: '#64748b',
-                fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
-                fontSize: '12px',
-                fontWeight: 800,
-                cursor: 'pointer',
-              }}
-            >
-              ↑ ブロック棚を開く
-            </button>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '4px 12px 6px',
+              borderRadius: '10px',
+              border: '1.5px dashed #cbd5e1',
+              background: 'white',
+              color: '#64748b',
+              fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
+              fontSize: '12px',
+              fontWeight: 800,
+            }}>
+              ブロック棚
+            </div>
           ) : (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', minWidth: 0 }}>
-                  <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>
-                    ブロック棚
-                  </span>
-                  <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '11px', color: '#94a3b8', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    下からドラッグして、空いている場所に置きます
-                  </span>
-                </div>
-                <button
-                  onClick={() => setCollapsed(true)}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: '999px',
-                    border: '1.5px solid #e2e8f0',
-                    background: 'white',
-                    color: '#64748b',
-                    fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
-                    fontSize: '12px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                  }}
-                >
-                  ↓ しまう
-                </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px', minWidth: 0 }}>
+                <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>
+                  ブロック棚
+                </span>
+                <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '11px', color: '#94a3b8', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  下からドラッグして、空いている場所に置きます
+                </span>
               </div>
 
               <div style={{
                 display: 'flex',
                 flexWrap: 'nowrap',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '12px',
                 overflowX: 'auto',
                 overflowY: 'hidden',
-                paddingBottom: '4px',
+                minHeight: '87px',
+                paddingBottom: '6px',
                 WebkitOverflowScrolling: 'touch',
               }}>
                 {(refNames.length > 0 || inferNames.length > 0) && (
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 12px',
+                    gap: '8px',
+                    padding: '12px 16px',
                     background: '#e2e8f0',
                     borderRadius: '12px',
+                    minHeight: '87px',
                     flex: '0 0 auto',
                   }}>
                     <span style={{ fontSize: '10px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif' }}>
