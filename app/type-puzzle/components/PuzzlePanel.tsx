@@ -7,6 +7,7 @@ import NodeCard from './NodeCard';
 import TreeDndContext from './TreeDndContext';
 import RootDropZone from './RootDropZone';
 import UndoControls from './UndoControls';
+import CodePreview from './CodePreview';
 
 interface Props {
   typeResult?: TypeResultMap;
@@ -18,13 +19,14 @@ interface Props {
   onJudge: () => Promise<boolean>;
   judgeResult: boolean | null;
   solved: Set<string>;
+  codeSource: string;
   onUndo: () => void;
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
 }
 
-export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuzzleId, onPuzzleChange, onNodeUpdate, onJudge, judgeResult, solved, onUndo, onRedo, canUndo, canRedo }: Props) {
+export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuzzleId, onPuzzleChange, onNodeUpdate, onJudge, judgeResult, solved, codeSource, onUndo, onRedo, canUndo, canRedo }: Props) {
   const [judging, setJudging] = useState(false);
   const puzzle = puzzles.find(p => p.id === currentPuzzleId) ?? puzzles[0];
   const refNames = ['User'];
@@ -218,6 +220,9 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
           </div>
         )}
       </div>
+
+      {/* Generated code preview */}
+      <CodePreview source={codeSource} />
     </div>
   );
 }

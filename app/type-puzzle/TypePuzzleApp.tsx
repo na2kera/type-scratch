@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { TypeNode, NodeId, BaseRow, TypeResultMap, NodeTypeResult } from './lib/types';
 import { mapChildren } from './lib/nodes';
-import { generateSource, generateCheckSource } from './lib/codegen';
+import { generateSource, generateCheckSource, generateReadableSource } from './lib/codegen';
 import { puzzles } from './lib/puzzles';
 import { evaluateType } from './workers/worker-client';
 import { useUndoable } from './lib/useUndoable';
@@ -45,6 +45,13 @@ export default function TypePuzzleApp() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const current = mode === 'sandbox' ? sandbox : puzzle;
+
+  const codeSource = useMemo(() => {
+    const baseTypeSource = mode === 'sandbox'
+      ? `type T = { ${baseRows.map(r => `${r.key}: ${r.type}`).join('; ')} };`
+      : (puzzles.find(p => p.id === currentPuzzleId) ?? puzzles[0]).baseTypeSource;
+    return generateReadableSource(baseTypeSource, current.present);
+  }, [current.present, baseRows, mode, currentPuzzleId]);
 
   function applyPuzzleRoot(root: TypeNode | null) {
     puzzle.set(root);
@@ -183,6 +190,7 @@ export default function TypePuzzleApp() {
             onBaseRowsChange={setBaseRows}
             onNodeUpdate={handleNodeUpdate}
             outputResult={outputResult}
+            codeSource={codeSource}
             onUndo={current.undo}
             onRedo={current.redo}
             canUndo={current.canUndo}
@@ -199,6 +207,7 @@ export default function TypePuzzleApp() {
             onJudge={handleJudge}
             judgeResult={judgeResult}
             solved={solved}
+            codeSource={codeSource}
             onUndo={current.undo}
             onRedo={current.redo}
             canUndo={current.canUndo}
