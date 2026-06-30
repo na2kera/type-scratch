@@ -82,7 +82,7 @@ export default function Tutorial({ onDismiss }: Props) {
               <span style={{ color: '#2563eb', fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontWeight: 700, fontSize: '12px' }}>TS</span>
             </div>
             <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '13px', fontWeight: 800, color: 'rgba(255,255,255,0.9)' }}>
-              type-puzzle — チュートリアル
+              type-scratch — チュートリアル
             </span>
           </div>
           <button
