@@ -41,6 +41,14 @@ function formatType(checker: ts.TypeChecker, type: ts.Type): string {
     ts.TypeFormatFlags.NoTruncation |
     ts.TypeFormatFlags.UseSingleQuotesForStringLiteralType;
 
+  if (type.flags & ts.TypeFlags.Boolean) {
+    return checker.typeToString(type, undefined, flags);
+  }
+
+  if (type.isUnion()) {
+    return type.types.map(t => formatType(checker, t)).join(' | ');
+  }
+
   stripAliasesDeep(checker, type, new Set());
   return checker.typeToString(type, undefined, flags);
 }
