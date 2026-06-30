@@ -11,9 +11,21 @@ const compilerOptions: ts.CompilerOptions = {
 let fsMap: Map<string, string> | null = null;
 let cachedEnv: ReturnType<typeof createVirtualTypeScriptEnvironment> | null = null;
 
+function formatType(checker: ts.TypeChecker, type: ts.Type): string {
+  const flags =
+    ts.TypeFormatFlags.NoTruncation |
+    ts.TypeFormatFlags.UseSingleQuotesForStringLiteralType;
+
+  if (type.isUnion()) {
+    return type.types.map(t => checker.typeToString(t, undefined, flags)).join(' | ');
+  }
+
+  return checker.typeToString(type, undefined, flags);
+}
+
 async function evaluate(source: string): Promise<{ displayString: string; errors: string[]; nodeResults: Record<string, string> }> {
   if (!fsMap) {
-    fsMap = await createDefaultMapFromCDN(compilerOptions, ts.version, true, ts);
+    fsMap = await createDefaultMapFromCDN(compilerOptions, ts.version, false, ts);
   }
 
   if (!cachedEnv) {
@@ -37,14 +49,18 @@ async function evaluate(source: string): Promise<{ displayString: string; errors
   const nodeResults: Record<string, string> = {};
 
   for (const stmt of sourceFile.statements) {
-    if (!ts.isTypeAliasDeclaration(stmt)) continue;
-    const name = stmt.name.text;
-    const type = checker.getTypeAtLocation(stmt.name);
-    const str = checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation);
-    if (name === '__Output') {
-      displayString = str;
-    } else if (name.startsWith('N_')) {
-      nodeResults[name.slice(2)] = str;
+    if (!ts.isVariableStatement(stmt)) continue;
+    for (const decl of stmt.declarationList.declarations) {
+      if (!ts.isIdentifier(decl.name)) continue;
+      const name = decl.name.text;
+      if (!name.startsWith('__E_')) continue;
+      const type = checker.getTypeAtLocation(decl.name);
+      const str = formatType(checker, type);
+      if (name === '__E___output') {
+        displayString = str;
+      } else {
+        nodeResults[name.slice(4)] = str;
+      }
     }
   }
 

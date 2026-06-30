@@ -2,6 +2,7 @@ import { TypeNode, NodeId } from './types';
 import { renderExpression, walkChildren } from './nodes';
 
 function markExtendsSubtree(root: TypeNode, out: Set<NodeId>): void {
+  if (!root) return;
   if (root.kind === 'conditional') {
     function markAll(n: TypeNode) {
       out.add(n.id);
@@ -33,11 +34,13 @@ export function generateSource(baseTypeSource: string, root: TypeNode): string {
     if (insideExtends.has(node.id)) return expr;
     const alias = `N_${node.id}`;
     lines.push(`type ${alias} = ${expr};`);
+    lines.push(`const __E_${node.id} = null as unknown as ${alias};`);
     return alias;
   }
 
   const rootRef = visit(root);
   lines.push(`type __Output = ${rootRef};`);
+  lines.push(`const __E___output = null as unknown as __Output;`);
   return lines.join('\n');
 }
 

@@ -53,32 +53,34 @@ export function renderExpression(node: TypeNode, visit: (n: TypeNode) => string)
 }
 
 export function walkChildren(node: TypeNode, fn: (child: TypeNode) => void): void {
+  if (!node) return;
   switch (node.kind) {
-    case 'object': node.props.forEach(p => fn(p.value)); break;
+    case 'object': node.props.forEach(p => { if (p.value) fn(p.value); }); break;
     case 'union': node.members.forEach(fn); break;
     case 'intersection': node.members.forEach(fn); break;
     case 'tuple': node.elements.forEach(fn); break;
-    case 'array': fn(node.element); break;
-    case 'keyof': fn(node.target); break;
-    case 'indexedAccess': fn(node.target); fn(node.key); break;
-    case 'mappedType': fn(node.keys); fn(node.source); break;
-    case 'conditional': fn(node.check); fn(node.extends); fn(node.trueBranch); fn(node.falseBranch); break;
+    case 'array': if (node.element) fn(node.element); break;
+    case 'keyof': if (node.target) fn(node.target); break;
+    case 'indexedAccess': if (node.target) fn(node.target); if (node.key) fn(node.key); break;
+    case 'mappedType': if (node.keys) fn(node.keys); if (node.source) fn(node.source); break;
+    case 'conditional': if (node.check) fn(node.check); if (node.extends) fn(node.extends); if (node.trueBranch) fn(node.trueBranch); if (node.falseBranch) fn(node.falseBranch); break;
     case 'templateLiteral': node.parts.forEach(p => { if (typeof p !== 'string') fn(p); }); break;
   }
 }
 
 export function mapChildren(node: TypeNode, fn: (child: TypeNode) => TypeNode): TypeNode {
+  if (!node) return node;
   switch (node.kind) {
-    case 'object': return { ...node, props: node.props.map(p => ({ ...p, value: fn(p.value) })) };
+    case 'object': return { ...node, props: node.props.map(p => ({ ...p, value: p.value ? fn(p.value) : p.value })) };
     case 'union': return { ...node, members: node.members.map(fn) };
     case 'intersection': return { ...node, members: node.members.map(fn) };
     case 'tuple': return { ...node, elements: node.elements.map(fn) };
-    case 'array': return { ...node, element: fn(node.element) };
-    case 'keyof': return { ...node, target: fn(node.target) };
-    case 'indexedAccess': return { ...node, target: fn(node.target), key: fn(node.key) };
-    case 'mappedType': return { ...node, keys: fn(node.keys), source: fn(node.source) };
-    case 'conditional': return { ...node, check: fn(node.check), extends: fn(node.extends), trueBranch: fn(node.trueBranch), falseBranch: fn(node.falseBranch) };
-    case 'templateLiteral': return { ...node, parts: node.parts.map(p => typeof p === 'string' ? p : fn(p)) };
+    case 'array': return { ...node, element: node.element ? fn(node.element) : node.element };
+    case 'keyof': return { ...node, target: node.target ? fn(node.target) : node.target };
+    case 'indexedAccess': return { ...node, target: node.target ? fn(node.target) : node.target, key: node.key ? fn(node.key) : node.key };
+    case 'mappedType': return { ...node, keys: node.keys ? fn(node.keys) : node.keys, source: node.source ? fn(node.source) : node.source };
+    case 'conditional': return { ...node, check: node.check ? fn(node.check) : node.check, extends: node.extends ? fn(node.extends) : node.extends, trueBranch: node.trueBranch ? fn(node.trueBranch) : node.trueBranch, falseBranch: node.falseBranch ? fn(node.falseBranch) : node.falseBranch };
+    case 'templateLiteral': return { ...node, parts: node.parts.map(p => typeof p === 'string' ? p : (p ? fn(p) : p)) };
   }
   return node;
 }
