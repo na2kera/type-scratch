@@ -95,7 +95,7 @@ export default function SandboxPanel({ typeResult, root, onRootChange, baseRows,
               <div style={{
                 background: '#1e293b',
                 padding: '12px 14px',
-                fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
+                fontFamily: 'Menlo, var(--font-geist-mono), ui-monospace, monospace',
                 fontSize: '12px',
                 color: outputResult.errors.length > 0 ? '#fca5a5' : '#86efac',
                 whiteSpace: 'pre-wrap',

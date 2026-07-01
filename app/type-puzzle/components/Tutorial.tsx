@@ -79,7 +79,7 @@ export default function Tutorial({ onDismiss }: Props) {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{ background: 'white', borderRadius: '8px', padding: '4px 10px' }}>
-              <span style={{ color: '#2563eb', fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontWeight: 700, fontSize: '12px' }}>TS</span>
+              <span style={{ color: '#2563eb', fontFamily: 'Menlo, var(--font-geist-mono), ui-monospace, monospace', fontWeight: 700, fontSize: '12px' }}>TS</span>
             </div>
             <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '13px', fontWeight: 800, color: 'rgba(255,255,255,0.9)' }}>
               type-scratch — チュートリアル
@@ -128,7 +128,7 @@ export default function Tutorial({ onDismiss }: Props) {
               background: '#1e293b',
               borderRadius: '10px',
               padding: '12px 16px',
-              fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
+              fontFamily: 'Menlo, var(--font-geist-mono), ui-monospace, monospace',
               fontSize: '13px',
               color: '#67e8f9',
               fontWeight: 600,
