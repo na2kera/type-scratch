@@ -131,7 +131,7 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
             background: '#1e293b',
             borderRadius: '10px',
             padding: '12px 16px',
-            fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
+            fontFamily: 'Menlo, var(--font-geist-mono), ui-monospace, monospace',
             fontSize: '13px',
             color: '#67e8f9',
             fontWeight: 600,
@@ -140,7 +140,7 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
           </div>
           <div style={{
             marginTop: '8px',
-            fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
+            fontFamily: 'Menlo, var(--font-geist-mono), ui-monospace, monospace',
             fontSize: '11px',
             color: '#94a3b8',
           }}>

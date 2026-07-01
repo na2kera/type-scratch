@@ -202,7 +202,7 @@ function PaletteItem({ kind, label, desc }: PaletteItemProps) {
         flexShrink: 0,
       }} />
       <div>
-        <div style={{ fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>
+        <div style={{ fontFamily: 'Menlo, var(--font-geist-mono), ui-monospace, monospace', fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>
           {label}
         </div>
         <div style={{ fontSize: '12px', color: '#94a3b8', fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', marginTop: '3px' }}>
@@ -233,7 +233,7 @@ function RefItem({ dragId, label, bg, data }: RefItemProps) {
         background: bg,
         color: 'white',
         fontSize: '14px',
-        fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
+        fontFamily: 'Menlo, var(--font-geist-mono), ui-monospace, monospace',
         fontWeight: 600,
         cursor: 'grab',
         opacity: isDragging ? 0.4 : 1,

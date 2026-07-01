@@ -152,7 +152,7 @@ export default function CodePreview({ source }: Props) {
             <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#22c55e' }} />
           </div>
           <span style={{
-            fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
+            fontFamily: 'Menlo, var(--font-geist-mono), ui-monospace, monospace',
             fontSize: '11px',
             color: '#475569',
             marginLeft: '4px',
@@ -186,7 +186,7 @@ export default function CodePreview({ source }: Props) {
       <div style={{
         background: '#1e293b',
         padding: '14px 16px',
-        fontFamily: 'var(--font-geist-mono), ui-monospace, monospace',
+        fontFamily: 'Menlo, var(--font-geist-mono), ui-monospace, monospace',
         fontSize: '12px',
         lineHeight: 1.7,
         overflowX: 'auto',
