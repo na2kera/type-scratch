@@ -1,4 +1,4 @@
-import { TypeNode, NodeId } from './types';
+import { TypeNode, NodeId, Puzzle, TypeParam } from './types';
 import { renderExpression, walkChildren, collectInferNamesInExtends, escapeStringLiteral, escapeTemplatePart } from './nodes';
 
 // ─── Readable code generator ────────────────────────────────────────────────
@@ -90,11 +90,18 @@ function renderReadable(node: TypeNode, insideExtends: Set<NodeId>): [string, Pr
 
     case 'mappedType': {
       const [keysExpr] = node.keys ? renderReadable(node.keys, insideExtends) : ['/* ? */', PREC.atom];
-      const [srcExpr, srcPrec] = node.source ? renderReadable(node.source, insideExtends) : ['/* ? */', PREC.atom];
+      const ro = node.transform === 'readonly' ? 'readonly ' : '';
       const opt = node.transform === 'optional' ? '?' : '';
       const suffix = node.transform === 'array' ? '[]' : '';
-      const srcWrapped = wrap(srcExpr, srcPrec, PREC.postfix);
-      return [`{ [K in ${keysExpr}]${opt}: ${srcWrapped}[K]${suffix} }`, PREC.atom];
+      let valueExpr: string;
+      if (node.value) {
+        const [vExpr, vPrec] = renderReadable(node.value, insideExtends);
+        valueExpr = wrap(vExpr, vPrec, PREC.postfix);
+      } else {
+        const [srcExpr, srcPrec] = node.source ? renderReadable(node.source, insideExtends) : ['/* ? */', PREC.atom];
+        valueExpr = `${wrap(srcExpr, srcPrec, PREC.postfix)}[K]`;
+      }
+      return [`{ ${ro}[K in ${keysExpr}]${opt}: ${valueExpr}${suffix} }`, PREC.atom];
     }
 
     case 'conditional': {
@@ -109,19 +116,36 @@ function renderReadable(node: TypeNode, insideExtends: Set<NodeId>): [string, Pr
         PREC.conditional,
       ];
     }
+
+    case 'rest': {
+      const [tExpr, tPrec] = node.target ? renderReadable(node.target, insideExtends) : ['/* ? */', PREC.atom];
+      return [`...${wrap(tExpr, tPrec, PREC.postfix)}`, PREC.atom];
+    }
+
+    case 'functionType': {
+      const [pExpr] = node.params ? renderReadable(node.params, insideExtends) : ['/* ? */', PREC.atom];
+      const [rExpr] = node.returnType ? renderReadable(node.returnType, insideExtends) : ['/* ? */', PREC.atom];
+      return [`(...args: ${pExpr}) => ${rExpr}`, PREC.conditional];
+    }
   }
+}
+
+function formatTypeParams(typeParams: TypeParam[]): string {
+  if (typeParams.length === 0) return '';
+  return `<${typeParams.map(p => p.constraint ? `${p.name} extends ${p.constraint}` : p.name).join(', ')}>`;
 }
 
 export function generateReadableSource(
   baseTypeSource: string,
   root: TypeNode | null,
-  resultName = 'Result'
+  resultName = 'Result',
+  typeParams: TypeParam[] = []
 ): string {
   if (!root) return baseTypeSource;
   const insideExtends = new Set<NodeId>();
   markExtendsSubtree(root, insideExtends);
   const [expr] = renderReadable(root, insideExtends);
-  return `${baseTypeSource}\n\ntype ${resultName} = ${expr};`;
+  return `${baseTypeSource}\n\ntype ${resultName}${formatTypeParams(typeParams)} = ${expr};`;
 }
 
 function markExtendsSubtree(root: TypeNode, out: Set<NodeId>): void {
@@ -140,10 +164,10 @@ function markExtendsSubtree(root: TypeNode, out: Set<NodeId>): void {
   walkChildren(root, child => markExtendsSubtree(child, out));
 }
 
-// conditional の分岐内などで infer 変数を参照しているノードは、トップレベルの
-// type エイリアスに巻き上げるとスコープ外参照になる。束縛されていない infer 名を
-// 含むノードの ID を集めて、インライン展開の対象にする。
-function collectFreeInferIds(root: TypeNode): Set<NodeId> {
+// conditional の分岐内などで infer 変数(や mapped type の K)を参照しているノードは、
+// トップレベルの type エイリアスに巻き上げるとスコープ外参照になる。束縛されていない
+// 自由変数名を含むノードの ID を集めて、インライン展開の対象にする。
+function collectFreeVarIds(root: TypeNode): Set<NodeId> {
   const result = new Set<NodeId>();
 
   function visit(node: TypeNode): Set<string> {
@@ -151,6 +175,9 @@ function collectFreeInferIds(root: TypeNode): Set<NodeId> {
     let free: Set<string>;
     if (node.kind === 'infer') {
       free = new Set([node.name]);
+    } else if (node.kind === 'ref' && node.name === 'K') {
+      // mapped type のイテレータ 'K' への参照。束縛元は mappedType の value スロット。
+      free = new Set(['K']);
     } else if (node.kind === 'conditional') {
       free = node.check ? new Set(visit(node.check)) : new Set();
       if (node.extends) visit(node.extends);
@@ -159,6 +186,15 @@ function collectFreeInferIds(root: TypeNode): Set<NodeId> {
         if (!branch) continue;
         for (const name of visit(branch)) {
           if (!declared.has(name)) free.add(name);
+        }
+      }
+    } else if (node.kind === 'mappedType') {
+      free = node.keys ? new Set(visit(node.keys)) : new Set();
+      if (node.source) visit(node.source);
+      if (node.value) {
+        // value サブツリー内の 'K' は mappedType 自身が束縛するので自由変数から除く
+        for (const name of visit(node.value)) {
+          if (name !== 'K') free.add(name);
         }
       }
     } else {
@@ -174,11 +210,20 @@ function collectFreeInferIds(root: TypeNode): Set<NodeId> {
   return result;
 }
 
-export function generateSource(baseTypeSource: string, root: TypeNode): string {
+export interface GenericContext {
+  typeParams: TypeParam[];
+  case0Args: string;
+}
+
+export function generateSource(baseTypeSource: string, root: TypeNode, ctx?: GenericContext): string {
   const lines = [baseTypeSource];
   const insideExtends = new Set<NodeId>();
   markExtendsSubtree(root, insideExtends);
-  const freeInferIds = collectFreeInferIds(root);
+  const freeVarIds = collectFreeVarIds(root);
+
+  const paramDecl = ctx ? formatTypeParams(ctx.typeParams) : '';
+  const paramArgs = ctx && ctx.typeParams.length > 0 ? `<${ctx.typeParams.map(p => p.name).join(', ')}>` : '';
+  const instArgs = ctx && ctx.typeParams.length > 0 ? `<${ctx.case0Args}>` : '';
 
   function visit(node: TypeNode): string {
     if ((node as unknown) === null) return 'never';
@@ -189,24 +234,34 @@ export function generateSource(baseTypeSource: string, root: TypeNode): string {
       return node.name;
     }
     const expr = renderExpression(node, visit);
-    if (insideExtends.has(node.id) || freeInferIds.has(node.id)) return expr;
+    // `type X = ...T;` は不正な構文のため、rest ノードは単独のエイリアスに巻き上げず常にインライン展開する
+    if (insideExtends.has(node.id) || freeVarIds.has(node.id) || node.kind === 'rest') return expr;
     const alias = `N_${node.id}`;
-    lines.push(`type ${alias} = ${expr};`);
-    lines.push(`const __E_${node.id} = null as unknown as ${alias};`);
-    return alias;
+    lines.push(`type ${alias}${paramDecl} = ${expr};`);
+    lines.push(`const __E_${node.id} = null as unknown as ${alias}${instArgs};`);
+    return `${alias}${paramArgs}`;
   }
 
   const rootRef = visit(root);
-  lines.push(`type __Output = ${rootRef};`);
-  lines.push(`const __E___output = null as unknown as __Output;`);
+  lines.push(`type __Output${paramDecl} = ${rootRef};`);
+  lines.push(`const __E___output = null as unknown as __Output${instArgs};`);
   return lines.join('\n');
 }
 
-export function generateCheckSource(baseTypeSource: string, root: TypeNode, targetTypeSource: string): string {
-  const base = generateSource(baseTypeSource, root);
-  return `${base}
-${targetTypeSource}
-type __Assert<T, U> =
-  (<V>() => V extends T ? 1 : 2) extends (<V>() => V extends U ? 1 : 2) ? true : never;
-const __check: __Assert<__Output, __Target> = true;`;
+export function generateCheckSource(puzzle: Puzzle, root: TypeNode): string {
+  const ctx: GenericContext | undefined = puzzle.typeParams.length > 0
+    ? { typeParams: puzzle.typeParams, case0Args: puzzle.testCases[0]?.args ?? '' }
+    : undefined;
+  const base = generateSource(puzzle.baseTypeSource, root, ctx);
+  const lines = [
+    base,
+    'type __Assert<T, U> =',
+    '  (<V>() => V extends T ? 1 : 2) extends (<V>() => V extends U ? 1 : 2) ? true : never;',
+  ];
+  puzzle.testCases.forEach((tc, i) => {
+    const outputRef = tc.args ? `__Output<${tc.args}>` : '__Output';
+    lines.push(`type __Expected_${i} = ${tc.expected};`);
+    lines.push(`const __check_${i}: __Assert<${outputRef}, __Expected_${i}> = true;`);
+  });
+  return lines.join('\n');
 }

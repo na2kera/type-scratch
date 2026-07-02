@@ -8,6 +8,7 @@ import { newId } from '../lib/nodes';
 interface Props {
   inferNames?: string[];
   refNames?: string[];
+  iterNames?: string[];
 }
 
 const EXPANDED_SPACER = 282;
@@ -103,6 +104,8 @@ const KIND_BG: Record<string, string> = {
   infer:           '#9333ea',
   templateLiteral: '#db2777',
   ref:             '#475569',
+  rest:            '#0ea5e9',
+  functionType:    '#7c3aed',
 };
 
 export const BLOCK_OPTIONS: { kind: NodeKind; label: string; desc: string }[] = [
@@ -119,6 +122,8 @@ export const BLOCK_OPTIONS: { kind: NodeKind; label: string; desc: string }[] = 
   { kind: 'conditional',     label: 'Conditional',     desc: 'T extends U ? A : B' },
   { kind: 'infer',           label: 'infer',           desc: 'infer R' },
   { kind: 'templateLiteral', label: 'Template Literal', desc: '`${T}-suffix`' },
+  { kind: 'rest',            label: 'Rest  ...T',       desc: '[...A, B] のスプレッド' },
+  { kind: 'functionType',    label: 'Function',        desc: '(...args: P) => R' },
 ];
 
 export function createDefaultNode(kind: NodeKind): TypeNode {
@@ -153,6 +158,12 @@ export function createDefaultNode(kind: NodeKind): TypeNode {
     case 'infer': return { id, kind: 'infer', name: 'R' };
     case 'templateLiteral': return { id, kind: 'templateLiteral', parts: [''] };
     case 'ref': return { id, kind: 'ref', name: '' };
+    case 'rest': return { id, kind: 'rest', target: { id: newId(), kind: 'tuple', elements: [] } };
+    case 'functionType': return {
+      id, kind: 'functionType',
+      params: { id: newId(), kind: 'primitive', name: 'any' },
+      returnType: { id: newId(), kind: 'primitive', name: 'any' },
+    };
   }
 }
 
@@ -250,7 +261,7 @@ function RefItem({ dragId, label, bg, data }: RefItemProps) {
   );
 }
 
-export default function BlockShelf({ inferNames = [], refNames = [] }: Props) {
+export default function BlockShelf({ inferNames = [], refNames = [], iterNames = [] }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const shelfDrag = useShelfDrag(collapsed, setCollapsed);
   const spacerHeight = collapsed ? `${COLLAPSED_SPACER}px` : `${EXPANDED_SPACER}px`;
@@ -312,7 +323,7 @@ export default function BlockShelf({ inferNames = [], refNames = [] }: Props) {
                 paddingBottom: '6px',
                 WebkitOverflowScrolling: 'touch',
               }}>
-                {(refNames.length > 0 || inferNames.length > 0) && (
+                {(refNames.length > 0 || inferNames.length > 0 || iterNames.length > 0) && (
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -342,6 +353,15 @@ export default function BlockShelf({ inferNames = [], refNames = [] }: Props) {
                         label={`infer ${name}`}
                         bg="#9333ea"
                         data={{ source: 'palette', kind: 'infer', name }}
+                      />
+                    ))}
+                    {iterNames.map(name => (
+                      <RefItem
+                        key={`iter-${name}`}
+                        dragId={`palette:iter:${name}`}
+                        label={name}
+                        bg="#ea580c"
+                        data={{ source: 'palette', kind: 'ref', name }}
                       />
                     ))}
                   </div>
