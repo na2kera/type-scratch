@@ -8,7 +8,9 @@ const compilerOptions: ts.CompilerOptions = {
   skipLibCheck: true,
 };
 
-let fsMap: Map<string, string> | null = null;
+// Promise を共有することで、初回ロード中に複数リクエストが来ても lib の CDN 取得と
+// 環境生成が二重に走らないようにする
+let fsMapPromise: Promise<Map<string, string>> | null = null;
 let cachedEnv: ReturnType<typeof createVirtualTypeScriptEnvironment> | null = null;
 
 function stripAliasesDeep(checker: ts.TypeChecker, type: ts.Type, seen: Set<ts.Type>): void {
@@ -46,7 +48,23 @@ function formatType(checker: ts.TypeChecker, type: ts.Type): string {
   }
 
   if (type.isUnion()) {
-    return type.types.map(t => formatType(checker, t)).join(' | ');
+    // boolean は内部的に true | false の Union なので、メンバーを個別に文字列化すると
+    // `string | false | true` のように分解されてしまう。両方揃っていたら boolean に戻す。
+    const parts: string[] = [];
+    let hasTrue = false;
+    let hasFalse = false;
+    for (const t of type.types) {
+      if (t.flags & ts.TypeFlags.BooleanLiteral) {
+        if (checker.typeToString(t, undefined, flags) === 'true') hasTrue = true;
+        else hasFalse = true;
+        continue;
+      }
+      parts.push(formatType(checker, t));
+    }
+    if (hasTrue && hasFalse) parts.push('boolean');
+    else if (hasTrue) parts.push('true');
+    else if (hasFalse) parts.push('false');
+    return parts.join(' | ');
   }
 
   stripAliasesDeep(checker, type, new Set());
@@ -54,9 +72,10 @@ function formatType(checker: ts.TypeChecker, type: ts.Type): string {
 }
 
 async function evaluate(source: string): Promise<{ displayString: string; errors: string[]; nodeResults: Record<string, string> }> {
-  if (!fsMap) {
-    fsMap = await createDefaultMapFromCDN(compilerOptions, ts.version, false, ts);
+  if (!fsMapPromise) {
+    fsMapPromise = createDefaultMapFromCDN(compilerOptions, ts.version, false, ts);
   }
+  const fsMap = await fsMapPromise;
 
   if (!cachedEnv) {
     fsMap.set('index.ts', source);

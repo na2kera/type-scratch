@@ -5,6 +5,23 @@ export function newId(): NodeId {
   return `node_${++counter}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
+export function escapeStringLiteral(value: string): string {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n');
+}
+
+export function escapeTemplatePart(value: string): string {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/`/g, '\\`')
+    .replace(/\$\{/g, '\\${')
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n');
+}
+
 export function renderExpression(node: TypeNode, visit: (n: TypeNode) => string): string {
   switch (node.kind) {
     case 'object': {
@@ -17,13 +34,14 @@ export function renderExpression(node: TypeNode, visit: (n: TypeNode) => string)
     case 'primitive':
       return node.name;
     case 'literal': {
-      if (typeof node.value === 'string') return `'${node.value}'`;
+      if (typeof node.value === 'string') return `'${escapeStringLiteral(node.value)}'`;
       return String(node.value);
     }
     case 'union':
-      return node.members.map(visit).join(' | ');
+      // メンバー0件のまま出力すると `type X = ;` になるため、Union の単位元 never を出す
+      return node.members.length === 0 ? 'never' : node.members.map(visit).join(' | ');
     case 'intersection':
-      return node.members.map(visit).join(' & ');
+      return node.members.length === 0 ? 'unknown' : node.members.map(visit).join(' & ');
     case 'tuple':
       return `[${node.elements.map(visit).join(', ')}]`;
     case 'array':
@@ -43,7 +61,7 @@ export function renderExpression(node: TypeNode, visit: (n: TypeNode) => string)
       return node.name;
     case 'templateLiteral': {
       const parts = node.parts.map(p =>
-        typeof p === 'string' ? p : `\${${visit(p)}}`
+        typeof p === 'string' ? escapeTemplatePart(p) : `\${${visit(p)}}`
       ).join('');
       return `\`${parts}\``;
     }
