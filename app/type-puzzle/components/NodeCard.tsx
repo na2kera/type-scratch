@@ -22,6 +22,8 @@ const KIND_CONFIG: Record<string, { bg: string; label: string }> = {
   infer:           { bg: '#9333ea', label: 'infer' },
   templateLiteral: { bg: '#db2777', label: 'Template Literal' },
   ref:             { bg: '#475569', label: 'ref' },
+  rest:            { bg: '#0ea5e9', label: 'Rest  ...T' },
+  functionType:    { bg: '#7c3aed', label: 'Function' },
 };
 
 // Shared style helpers for Scratch-like inputs inside colored blocks
@@ -375,17 +377,39 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
           </div>
         );
 
-      case 'mappedType':
+      case 'mappedType': {
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
               <span style={scratchLabel}>キー集合</span>
               <Slot {...makeSlotProps({ kind: 'single', parentId: node.id, slot: 'keys' }, node.keys)} />
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-              <span style={scratchLabel}>元のobject</span>
-              <Slot {...makeSlotProps({ kind: 'single', parentId: node.id, slot: 'source' }, node.source)} />
-            </div>
+            {node.value == null ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <span style={scratchLabel}>元のobject</span>
+                <Slot {...makeSlotProps({ kind: 'single', parentId: node.id, slot: 'source' }, node.source)} />
+                <button
+                  onClick={() => onNodeUpdate(node.id, cur => (cur.kind === 'mappedType'
+                    ? { ...cur, source: null, value: { id: newId(), kind: 'ref', name: 'K' } }
+                    : cur))}
+                  style={{ ...scratchInput, cursor: 'pointer', fontSize: '10px', fontWeight: 700, color: '#ea580c', background: 'rgba(255,255,255,0.9)', padding: '2px 8px' }}
+                >
+                  カスタム値に切替
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <span style={scratchLabel}>値</span>
+                <Slot {...makeSlotProps(
+                  { kind: 'single', parentId: node.id, slot: 'value' },
+                  node.value,
+                  undefined,
+                  () => onNodeUpdate(node.id, cur => (cur.kind === 'mappedType'
+                    ? { ...cur, value: null, source: { id: newId(), kind: 'object', props: [] } }
+                    : cur))
+                )} />
+              </div>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={scratchLabel}>変換</span>
               <select
@@ -396,10 +420,12 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
                 <option value="keep">そのまま</option>
                 <option value="array">配列化</option>
                 <option value="optional">optional化</option>
+                <option value="readonly">readonly化</option>
               </select>
             </div>
           </div>
         );
+      }
 
       case 'conditional': {
         const extendsInferNames = collectInferNamesInExtends(node.extends);
@@ -526,6 +552,31 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span style={{ color: 'white', fontFamily: 'Menlo, var(--font-geist-mono), ui-monospace, monospace', fontWeight: 700, fontSize: '13px' }}>{node.name}</span>
+          </div>
+        );
+
+      case 'rest':
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ color: 'white', fontWeight: 900, fontFamily: 'Menlo, var(--font-geist-mono), ui-monospace, monospace' }}>...</span>
+            <Slot
+              {...makeSlotProps(
+                { kind: 'single', parentId: node.id, slot: 'target' },
+                node.target,
+                undefined,
+                () => onNodeUpdate(node.id, cur => ({ ...cur, target: null } as unknown as TypeNode))
+              )}
+            />
+          </div>
+        );
+
+      case 'functionType':
+        return (
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
+            <span style={{ color: 'white', fontWeight: 900, fontFamily: 'Menlo, var(--font-geist-mono), ui-monospace, monospace', fontSize: '12px' }}>(...args:</span>
+            <Slot {...makeSlotProps({ kind: 'single', parentId: node.id, slot: 'params' }, node.params)} />
+            <span style={{ color: 'white', fontWeight: 900, fontFamily: 'Menlo, var(--font-geist-mono), ui-monospace, monospace', fontSize: '12px' }}>{') =>'}</span>
+            <Slot {...makeSlotProps({ kind: 'single', parentId: node.id, slot: 'returnType' }, node.returnType)} />
           </div>
         );
 

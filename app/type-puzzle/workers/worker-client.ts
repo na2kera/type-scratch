@@ -1,8 +1,14 @@
 'use client';
 
-import { WorkerRequest, WorkerResponse } from '../lib/types';
+import { WorkerRequest, WorkerResponse, CaseResultMap } from '../lib/types';
 
-type EvalResult = { displayString: string; errors: string[]; nodeResults: Record<string, string> };
+type EvalResult = {
+  displayString: string;
+  errors: string[];
+  nodeResults: Record<string, string>;
+  caseErrors: CaseResultMap;
+  globalErrors: string[];
+};
 type Resolver = { resolve: (v: EvalResult) => void; reject: (e: Error) => void };
 
 let worker: Worker | null = null;
@@ -18,7 +24,13 @@ function getWorker(): Worker {
       if (!p) return;
       pending.delete(res.requestId);
       if (res.type === 'result') {
-        p.resolve({ displayString: res.displayString, errors: res.errors, nodeResults: res.nodeResults });
+        p.resolve({
+          displayString: res.displayString,
+          errors: res.errors,
+          nodeResults: res.nodeResults,
+          caseErrors: res.caseErrors,
+          globalErrors: res.globalErrors,
+        });
       } else {
         p.reject(new Error(res.message));
       }

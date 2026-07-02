@@ -13,13 +13,15 @@ export function findNode(root: TypeNode | null, id: NodeId): TypeNode | null {
     case 'array': return findNode(root.element, id);
     case 'keyof': return findNode(root.target, id);
     case 'indexedAccess': { const r = findNode(root.target, id); if (r) return r; return findNode(root.key, id); }
-    case 'mappedType': { const r = findNode(root.keys, id); if (r) return r; return findNode(root.source, id); }
+    case 'mappedType': { const r = findNode(root.keys, id) || findNode(root.source, id); if (r) return r; return findNode(root.value ?? null, id); }
     case 'conditional': {
       const r = findNode(root.check, id) || findNode(root.extends, id) || findNode(root.trueBranch, id) || findNode(root.falseBranch, id);
       if (r) return r;
       break;
     }
     case 'templateLiteral': for (const p of root.parts) { if (typeof p !== 'string') { const r = findNode(p, id); if (r) return r; } } break;
+    case 'rest': return findNode(root.target, id);
+    case 'functionType': { const r = findNode(root.params, id); if (r) return r; return findNode(root.returnType, id); }
   }
   return null;
 }
@@ -83,10 +85,12 @@ function removeNode(root: TypeNode, id: NodeId): [TypeNode | null, TypeNode | nu
       }
       case 'mappedType': {
         if (node.keys?.id === id) { extracted = node.keys; return { ...node, keys: null as unknown as TypeNode }; }
-        if (node.source?.id === id) { extracted = node.source; return { ...node, source: null as unknown as TypeNode }; }
+        if (node.source?.id === id) { extracted = node.source; return { ...node, source: null }; }
+        if (node.value?.id === id) { extracted = node.value; return { ...node, value: null }; }
         const keys = node.keys ? remove(node.keys) : null;
         const src = node.source ? remove(node.source) : null;
-        return { ...node, keys: keys ?? node.keys, source: src ?? node.source };
+        const val = node.value ? remove(node.value) : null;
+        return { ...node, keys: keys ?? node.keys, source: src ?? node.source, value: val ?? node.value };
       }
       case 'conditional': {
         const slots = ['check', 'extends', 'trueBranch', 'falseBranch'] as const;
@@ -107,6 +111,17 @@ function removeNode(root: TypeNode, id: NodeId): [TypeNode | null, TypeNode | nu
           return remove(p) ?? p;
         }).filter((p): p is string | TypeNode => p !== null);
         return { ...node, parts };
+      }
+      case 'rest': {
+        if (node.target?.id === id) { extracted = node.target; return { ...node, target: null as unknown as TypeNode }; }
+        const t = node.target ? remove(node.target) : null; return t ? { ...node, target: t } : node;
+      }
+      case 'functionType': {
+        if (node.params?.id === id) { extracted = node.params; return { ...node, params: null as unknown as TypeNode }; }
+        if (node.returnType?.id === id) { extracted = node.returnType; return { ...node, returnType: null as unknown as TypeNode }; }
+        const p = node.params ? remove(node.params) : null;
+        const rt = node.returnType ? remove(node.returnType) : null;
+        return { ...node, params: p ?? node.params, returnType: rt ?? node.returnType };
       }
     }
     return node;
@@ -283,7 +298,8 @@ function findParentSlot(root: TypeNode, childId: NodeId): SlotRef | null {
       case 'mappedType': {
         if (node.keys?.id === childId) return { kind: 'single', parentId: node.id, slot: 'keys' };
         if (node.source?.id === childId) return { kind: 'single', parentId: node.id, slot: 'source' };
-        return search(node.keys) || search(node.source);
+        if (node.value?.id === childId) return { kind: 'single', parentId: node.id, slot: 'value' };
+        return search(node.keys) || search(node.source) || search(node.value ?? null);
       }
       case 'conditional': {
         const slots = ['check', 'extends', 'trueBranch', 'falseBranch'] as const;
@@ -303,6 +319,15 @@ function findParentSlot(root: TypeNode, childId: NodeId): SlotRef | null {
           }
         }
         break;
+      }
+      case 'rest': {
+        if (node.target?.id === childId) return { kind: 'single', parentId: node.id, slot: 'target' };
+        return search(node.target);
+      }
+      case 'functionType': {
+        if (node.params?.id === childId) return { kind: 'single', parentId: node.id, slot: 'params' };
+        if (node.returnType?.id === childId) return { kind: 'single', parentId: node.id, slot: 'returnType' };
+        return search(node.params) || search(node.returnType);
       }
     }
     return null;

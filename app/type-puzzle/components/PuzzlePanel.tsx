@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { TypeNode, NodeId, TypeResultMap } from '../lib/types';
+import { TypeNode, NodeId, TypeResultMap, JudgeResult } from '../lib/types';
 import { puzzles } from '../lib/puzzles';
 import NodeCard from './NodeCard';
 import TreeDndContext from './TreeDndContext';
@@ -18,7 +18,7 @@ interface Props {
   onPuzzleChange: (id: string) => void;
   onNodeUpdate: (id: NodeId, updater: (node: TypeNode) => TypeNode) => void;
   onJudge: () => Promise<boolean>;
-  judgeResult: boolean | null;
+  judgeResult: JudgeResult | null;
   solved: Set<string>;
   codeSource: string;
   onUndo: () => void;
@@ -30,7 +30,10 @@ interface Props {
 export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuzzleId, onPuzzleChange, onNodeUpdate, onJudge, judgeResult, solved, codeSource, onUndo, onRedo, canUndo, canRedo }: Props) {
   const [judging, setJudging] = useState(false);
   const puzzle = puzzles.find(p => p.id === currentPuzzleId) ?? puzzles[0];
-  const refNames = ['User'];
+  const refNames = puzzle.refNames;
+  const iterNames = puzzle.typeParams.length > 0 ? ['K'] : [];
+  const showCaseList = puzzle.typeParams.length > 0 || puzzle.testCases.length > 1;
+  const solutionName = /type\s+(\w+)/.exec(puzzle.targetCodeDisplay)?.[1] ?? 'Result';
 
   async function handleJudge() {
     setJudging(true);
@@ -149,6 +152,74 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
         </div>
       </div>
 
+      {/* Test cases */}
+      {showCaseList && (
+        <div style={{
+          background: 'white',
+          borderRadius: '14px',
+          overflow: 'hidden',
+          border: '1.5px solid #e2e8f0',
+          marginBottom: '16px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+        }}>
+          <div style={{
+            background: '#f8fafc',
+            padding: '8px 16px',
+            fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
+            fontSize: '11px',
+            fontWeight: 800,
+            color: '#94a3b8',
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+          }}>
+            テストケース
+          </div>
+          <div style={{ padding: '4px 0' }}>
+            {puzzle.testCases.map((tc, i) => {
+              const state: 'pending' | 'pass' | 'fail' = !judgeResult
+                ? 'pending'
+                : judgeResult.cases[i] ? 'pass' : 'fail';
+              const chipBg = state === 'pass' ? '#dcfce7' : state === 'fail' ? '#fee2e2' : '#f1f5f9';
+              const chipColor = state === 'pass' ? '#166534' : state === 'fail' ? '#991b1b' : '#94a3b8';
+              const chipLabel = state === 'pass' ? '✓' : state === 'fail' ? '✗' : '—';
+              const label = tc.label ?? `${solutionName}${tc.args ? `<${tc.args}>` : ''} → ${tc.expected}`;
+              return (
+                <div
+                  key={i}
+                  title={state === 'fail' ? '結果がテストケースと一致しません' : undefined}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '6px 16px',
+                    fontFamily: 'Menlo, var(--font-geist-mono), ui-monospace, monospace',
+                    fontSize: '12px',
+                    color: '#334155',
+                  }}
+                >
+                  <span style={{
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50%',
+                    background: chipBg,
+                    color: chipColor,
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    {chipLabel}
+                  </span>
+                  <span className="code-snippet-scroll">{label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Tree area */}
       <div className="workspace-titlebar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
         <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '12px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -207,25 +278,30 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
             <div style={{
               padding: '10px 20px',
               borderRadius: '12px',
-              background: judgeResult ? '#dcfce7' : '#fee2e2',
-              border: `2px solid ${judgeResult ? '#86efac' : '#fca5a5'}`,
+              background: judgeResult.passed ? '#dcfce7' : '#fee2e2',
+              border: `2px solid ${judgeResult.passed ? '#86efac' : '#fca5a5'}`,
               fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
               fontSize: '14px',
               fontWeight: 800,
-              color: judgeResult ? '#166534' : '#991b1b',
+              color: judgeResult.passed ? '#166534' : '#991b1b',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
             }}>
-              <span style={{ fontSize: '18px' }}>{judgeResult ? '🎉' : '😅'}</span>
-              {judgeResult ? '正解！' : 'もう一度試してみてください'}
+              <span style={{ fontSize: '18px' }}>{judgeResult.passed ? '🎉' : '😅'}</span>
+              {judgeResult.passed ? '正解！' : 'もう一度試してみてください'}
+              {!judgeResult.passed && judgeResult.globalErrors.length > 0 && (
+                <span style={{ fontWeight: 500, fontSize: '12px', opacity: 0.85 }} title={judgeResult.globalErrors.join('\n')}>
+                  ({judgeResult.globalErrors[0].slice(0, 60)})
+                </span>
+              )}
             </div>
           )}
         </div>
 
         {/* Generated code preview */}
         <CodePreview source={codeSource} />
-        <BlockShelf refNames={refNames} />
+        <BlockShelf refNames={refNames} iterNames={iterNames} />
       </TreeDndContext>
     </div>
   );

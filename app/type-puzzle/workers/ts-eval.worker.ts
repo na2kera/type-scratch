@@ -71,7 +71,13 @@ function formatType(checker: ts.TypeChecker, type: ts.Type): string {
   return checker.typeToString(type, undefined, flags);
 }
 
-async function evaluate(source: string): Promise<{ displayString: string; errors: string[]; nodeResults: Record<string, string> }> {
+async function evaluate(source: string): Promise<{
+  displayString: string;
+  errors: string[];
+  nodeResults: Record<string, string>;
+  caseErrors: Record<number, string[]>;
+  globalErrors: string[];
+}> {
   if (!fsMapPromise) {
     fsMapPromise = createDefaultMapFromCDN(compilerOptions, ts.version, false, ts);
   }
@@ -97,11 +103,23 @@ async function evaluate(source: string): Promise<{ displayString: string; errors
   let displayString = '(error)';
   const nodeResults: Record<string, string> = {};
 
+  // __check_<i> 宣言の位置範囲を記録し、診断をケースごとに振り分ける
+  const caseRanges: { index: number; start: number; end: number }[] = [];
+  const caseErrors: Record<number, string[]> = {};
+  const checkNameRe = /^__check_(\d+)$/;
+
   for (const stmt of sourceFile.statements) {
     if (!ts.isVariableStatement(stmt)) continue;
     for (const decl of stmt.declarationList.declarations) {
       if (!ts.isIdentifier(decl.name)) continue;
       const name = decl.name.text;
+      const checkMatch = checkNameRe.exec(name);
+      if (checkMatch) {
+        const index = Number(checkMatch[1]);
+        caseRanges.push({ index, start: stmt.getStart(sourceFile), end: stmt.end });
+        caseErrors[index] = [];
+        continue;
+      }
       if (!name.startsWith('__E_')) continue;
       const type = checker.getTypeAtLocation(decl.name);
       const str = formatType(checker, type);
@@ -113,7 +131,20 @@ async function evaluate(source: string): Promise<{ displayString: string; errors
     }
   }
 
-  return { displayString, errors, nodeResults };
+  const globalErrors: string[] = [];
+  for (const d of diagnostics) {
+    const message = ts.flattenDiagnosticMessageText(d.messageText, '\n');
+    const range = d.file === sourceFile && d.start != null
+      ? caseRanges.find(r => d.start! >= r.start && d.start! < r.end)
+      : undefined;
+    if (range) {
+      caseErrors[range.index].push(message);
+    } else {
+      globalErrors.push(message);
+    }
+  }
+
+  return { displayString, errors, nodeResults, caseErrors, globalErrors };
 }
 
 self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
@@ -126,6 +157,8 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
       displayString: result.displayString,
       errors: result.errors,
       nodeResults: result.nodeResults,
+      caseErrors: result.caseErrors,
+      globalErrors: result.globalErrors,
     };
     self.postMessage(response);
   } catch (err) {

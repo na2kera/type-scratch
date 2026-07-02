@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { TypeNode, NodeId, BaseRow, TypeResultMap, NodeTypeResult } from './lib/types';
+import { TypeNode, NodeId, BaseRow, TypeResultMap, NodeTypeResult, JudgeResult } from './lib/types';
 import { mapChildren } from './lib/nodes';
-import { generateSource, generateCheckSource, generateReadableSource } from './lib/codegen';
+import { generateSource, generateCheckSource, generateReadableSource, GenericContext } from './lib/codegen';
 import { puzzles } from './lib/puzzles';
 import { evaluateType } from './workers/worker-client';
 import { useUndoable } from './lib/useUndoable';
@@ -34,7 +34,7 @@ export default function TypePuzzleApp() {
 
   const puzzle = useUndoable<TypeNode | null>(null);
   const [currentPuzzleId, setCurrentPuzzleId] = useState(puzzles[0].id);
-  const [judgeResult, setJudgeResult] = useState<boolean | null>(null);
+  const [judgeResult, setJudgeResult] = useState<JudgeResult | null>(null);
   const { solved, markSolved } = useProgress();
   const { show: showTutorial, dismiss: dismissTutorial, open: openTutorial } = useTutorial();
   const puzzleRootsRef = useRef<Record<string, TypeNode | null>>({});
@@ -48,11 +48,20 @@ export default function TypePuzzleApp() {
 
   const current = mode === 'sandbox' ? sandbox : puzzle;
 
+  function getGenericContext(): GenericContext | undefined {
+    if (mode === 'sandbox') return undefined;
+    const p = puzzles.find(p => p.id === currentPuzzleId) ?? puzzles[0];
+    if (p.typeParams.length === 0) return undefined;
+    return { typeParams: p.typeParams, case0Args: p.testCases[0]?.args ?? '' };
+  }
+
   const codeSource = useMemo(() => {
     const baseTypeSource = mode === 'sandbox'
       ? `type T = { ${baseRows.map(r => `${r.key}: ${r.type}`).join('; ')} };`
       : (puzzles.find(p => p.id === currentPuzzleId) ?? puzzles[0]).baseTypeSource;
-    return generateReadableSource(baseTypeSource, current.present);
+    const p = mode === 'puzzle' ? (puzzles.find(p => p.id === currentPuzzleId) ?? puzzles[0]) : undefined;
+    return generateReadableSource(baseTypeSource, current.present, 'Result', p?.typeParams ?? []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current.present, baseRows, mode, currentPuzzleId]);
 
   function applyPuzzleRoot(root: TypeNode | null) {
@@ -123,7 +132,7 @@ export default function TypePuzzleApp() {
         return;
       }
       try {
-        const source = generateSource(getBaseTypeSource(), current.present);
+        const source = generateSource(getBaseTypeSource(), current.present, getGenericContext());
         const result = await evaluateType(source);
         if (seq !== evalSeqRef.current) return;
         setOutputResult(result);
@@ -144,17 +153,21 @@ export default function TypePuzzleApp() {
 
   async function handleJudge(): Promise<boolean> {
     const root = puzzle.present;
-    if (!root) { setJudgeResult(false); return false; }
     const p = puzzles.find(p => p.id === currentPuzzleId) ?? puzzles[0];
-    const source = generateCheckSource(p.baseTypeSource, root, p.targetTypeSource);
+    if (!root) {
+      setJudgeResult({ passed: false, cases: p.testCases.map(() => false), globalErrors: [] });
+      return false;
+    }
+    const source = generateCheckSource(p, root);
     try {
       const result = await evaluateType(source);
       const passed = result.errors.length === 0;
-      setJudgeResult(passed);
+      const cases = p.testCases.map((_, i) => (result.caseErrors[i] ?? []).length === 0 && result.globalErrors.length === 0);
+      setJudgeResult({ passed, cases, globalErrors: result.globalErrors });
       if (passed) markSolved(currentPuzzleId);
       return passed;
     } catch {
-      setJudgeResult(false);
+      setJudgeResult({ passed: false, cases: p.testCases.map(() => false), globalErrors: [] });
       return false;
     }
   }
