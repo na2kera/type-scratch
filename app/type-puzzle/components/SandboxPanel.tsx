@@ -29,15 +29,15 @@ export default function SandboxPanel({ typeResult, root, onRootChange, baseRows,
 
   return (
     <TreeDndContext root={root} onRootChange={onRootChange} typeResult={typeResult} onNodeUpdate={onNodeUpdate} refNames={refNames}>
-      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+      <div className="sandbox-layout" style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
         {/* Left: base type editor */}
-        <div style={{ width: '240px', flexShrink: 0 }}>
+        <div className="sandbox-sidebar" style={{ width: '240px', flexShrink: 0 }}>
           <BaseTypeEditor rows={baseRows} onChange={onBaseRowsChange} />
         </div>
 
         {/* Right: canvas */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+        <div className="workspace-column" style={{ flex: 1, minWidth: 0 }}>
+          <div className="workspace-titlebar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '12px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               ブロックツリー
             </span>
@@ -51,19 +51,21 @@ export default function SandboxPanel({ typeResult, root, onRootChange, baseRows,
             />
           </div>
 
-          {root ? (
-            <NodeCard
-              node={root}
-              rootNode={root}
-              onRemove={() => onRootChange(null)}
-              refNames={refNames}
-              typeResult={typeResult}
-              onNodeUpdate={onNodeUpdate}
-              isRoot
-            />
-          ) : (
-            <RootDropZone />
-          )}
+          <div className="tree-scroll">
+            {root ? (
+              <NodeCard
+                node={root}
+                rootNode={root}
+                onRemove={() => onRootChange(null)}
+                refNames={refNames}
+                typeResult={typeResult}
+                onNodeUpdate={onNodeUpdate}
+                isRoot
+              />
+            ) : (
+              <RootDropZone />
+            )}
+          </div>
 
           {/* Output result */}
           {outputResult && (

@@ -172,6 +172,7 @@ function PaletteItem({ kind, label, desc }: PaletteItemProps) {
   return (
     <div
       ref={setNodeRef}
+      className="block-palette-item hover:-translate-y-0.5 hover:shadow-md"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -186,11 +187,10 @@ function PaletteItem({ kind, label, desc }: PaletteItemProps) {
         transition: 'opacity 0.1s, transform 0.1s, box-shadow 0.1s',
         userSelect: 'none',
         flex: '0 0 auto',
-        minWidth: '160px',
+        minWidth: 'min(160px, calc(100vw - 56px))',
         minHeight: '87px',
         touchAction: 'none',
       }}
-      className="hover:-translate-y-0.5 hover:shadow-md"
       {...listeners}
       {...attributes}
     >
@@ -258,7 +258,7 @@ export default function BlockShelf({ inferNames = [], refNames = [] }: Props) {
   return (
     <>
       <div style={{ height: spacerHeight, transition: shelfDrag.dragY === 0 ? 'height 0.2s ease' : 'none' }} />
-      <div style={{
+      <div className="block-shelf-panel" style={{
         position: 'fixed',
         left: 0,
         right: 0,
@@ -268,7 +268,7 @@ export default function BlockShelf({ inferNames = [], refNames = [] }: Props) {
         borderTop: '1.5px solid #cbd5e1',
         boxShadow: '0 -8px 28px rgba(15,23,42,0.12)',
         backdropFilter: 'blur(10px)',
-        padding: collapsed ? '0 20px 10px' : '0 20px 24px',
+        padding: collapsed ? '0 clamp(12px, 4vw, 20px) 10px' : '0 clamp(12px, 4vw, 20px) 24px',
         transform: shelfDrag.dragY !== 0 ? `translateY(${shelfDrag.dragY}px)` : undefined,
         transition: shelfDrag.dragY === 0 ? 'transform 0.2s ease' : 'none',
       }}>
@@ -301,7 +301,7 @@ export default function BlockShelf({ inferNames = [], refNames = [] }: Props) {
                 </span>
               </div>
 
-              <div style={{
+              <div className="block-shelf-list" style={{
                 display: 'flex',
                 flexWrap: 'nowrap',
                 alignItems: 'center',

@@ -41,7 +41,7 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
   return (
     <div>
       {/* Puzzle tabs */}
-      <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', flexWrap: 'wrap' }}>
+      <div className="puzzle-tabs" style={{ display: 'flex', gap: '6px', marginBottom: '16px', flexWrap: 'wrap' }}>
         {puzzles.map((p, idx) => {
           const isCurrent = p.id === currentPuzzleId;
           const isSolved = solved.has(p.id);
@@ -135,7 +135,7 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
             fontSize: '13px',
             color: '#67e8f9',
             fontWeight: 600,
-          }}>
+          }} className="code-snippet-scroll">
             {puzzle.targetCodeDisplay}
           </div>
           <div style={{
@@ -143,14 +143,14 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
             fontFamily: 'Menlo, var(--font-geist-mono), ui-monospace, monospace',
             fontSize: '11px',
             color: '#94a3b8',
-          }}>
+          }} className="code-snippet-scroll">
             {puzzle.baseTypeSource}
           </div>
         </div>
       </div>
 
       {/* Tree area */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+      <div className="workspace-titlebar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
         <span style={{ fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', fontSize: '12px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           ブロックツリー
         </span>
@@ -165,22 +165,24 @@ export default function PuzzlePanel({ typeResult, root, onRootChange, currentPuz
       </div>
 
       <TreeDndContext root={root} onRootChange={onRootChange} typeResult={typeResult} onNodeUpdate={onNodeUpdate} refNames={refNames}>
-        {root ? (
-          <NodeCard
-            node={root}
-            rootNode={root}
-            onRemove={() => onRootChange(null)}
-            refNames={refNames}
-            typeResult={typeResult}
-            onNodeUpdate={onNodeUpdate}
-            isRoot
-          />
-        ) : (
-          <RootDropZone />
-        )}
+        <div className="tree-scroll">
+          {root ? (
+            <NodeCard
+              node={root}
+              rootNode={root}
+              onRemove={() => onRootChange(null)}
+              refNames={refNames}
+              typeResult={typeResult}
+              onNodeUpdate={onNodeUpdate}
+              isRoot
+            />
+          ) : (
+            <RootDropZone />
+          )}
+        </div>
 
         {/* Judge section */}
-        <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="judge-row" style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
             onClick={handleJudge}
             disabled={!root || judging}

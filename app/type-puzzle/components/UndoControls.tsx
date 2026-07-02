@@ -30,7 +30,7 @@ const btnDisabled: React.CSSProperties = {
 
 export default function UndoControls({ onUndo, onRedo, canUndo, canRedo, onReset, hasRoot }: Props) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+    <div className="undo-controls" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
       <button
         onClick={onUndo}
         disabled={!canUndo}

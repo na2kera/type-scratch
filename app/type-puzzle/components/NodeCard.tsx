@@ -548,6 +548,8 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
         boxShadow: '0 3px 10px rgba(0,0,0,0.18)',
         opacity: isDragging ? 0.45 : 1,
         transition: 'opacity 0.1s',
+        width: 'fit-content',
+        maxWidth: '100%',
       }}
     >
       {/* Header strip */}
@@ -637,7 +639,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
               left: 0,
               top: '100%',
               zIndex: 50,
-              width: '320px',
+              width: 'min(320px, calc(100vw - 32px))',
               maxHeight: '160px',
               overflowY: 'auto',
               background: '#1e293b',
@@ -681,7 +683,7 @@ export default function NodeCard({ node, rootNode, onRemove, inferNames = [], re
                 left: 0,
                 top: '100%',
                 zIndex: 50,
-                width: '320px',
+                width: 'min(320px, calc(100vw - 32px))',
                 maxHeight: '160px',
                 overflowY: 'auto',
                 background: '#1e293b',

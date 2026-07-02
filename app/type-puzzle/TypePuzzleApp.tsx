@@ -88,6 +88,8 @@ export default function TypePuzzleApp() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, currentPuzzleId, sandbox.present, puzzle.present]);
 
+  const { undo, redo } = current;
+
   function handlePuzzleChange(id: string) {
     puzzleRootsRef.current[currentPuzzleId] = puzzle.present;
     const savedRoot = puzzleRootsRef.current[id] ?? null;
@@ -101,15 +103,15 @@ export default function TypePuzzleApp() {
       if (!(e.ctrlKey || e.metaKey)) return;
       if (e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
-        current.undo();
+        undo();
       } else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
         e.preventDefault();
-        current.redo();
+        redo();
       }
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [current.undo, current.redo]);
+  }, [undo, redo]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -162,16 +164,16 @@ export default function TypePuzzleApp() {
       {showTutorial && <Tutorial onDismiss={dismissTutorial} />}
 
       <header style={{ background: '#2563eb', boxShadow: '0 3px 12px rgba(37,99,235,0.35)' }}>
-        <div style={{ maxWidth: '1280px' }} className="mx-auto px-5 flex items-center justify-between h-14">
+        <div style={{ maxWidth: '1280px' }} className="app-header-inner mx-auto px-5 flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
             <div style={{ background: 'white', borderRadius: '8px', padding: '4px 10px', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }}>
               <span style={{ color: '#2563eb', fontFamily: 'Menlo, var(--font-geist-mono), ui-monospace, monospace', fontWeight: 700, fontSize: '13px', letterSpacing: '-0.5px' }}>TS</span>
             </div>
-            <h1 style={{ fontFamily: 'var(--font-fredoka), sans-serif', color: 'white', fontWeight: 700, fontSize: '22px', letterSpacing: '0.01em', margin: 0 }}>
+            <h1 className="app-logo-title" style={{ fontFamily: 'var(--font-fredoka), sans-serif', color: 'white', fontWeight: 700, fontSize: '22px', letterSpacing: '0.01em', margin: 0 }}>
               type-scratch
             </h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="app-header-actions flex items-center gap-4">
             <button
               onClick={openTutorial}
               style={{ color: 'rgba(255,255,255,0.75)', fontSize: '13px', fontWeight: 600, fontFamily: 'var(--font-geist-sans), system-ui, sans-serif', background: 'none', border: 'none', cursor: 'pointer' }}
@@ -184,7 +186,7 @@ export default function TypePuzzleApp() {
         </div>
       </header>
 
-      <main style={{ maxWidth: '1280px' }} className="mx-auto px-5 py-5">
+      <main style={{ maxWidth: '1280px' }} className="app-main mx-auto px-5 py-5">
         {mode === 'sandbox' ? (
           <SandboxPanel
             typeResult={typeResult}

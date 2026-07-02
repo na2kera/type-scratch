@@ -22,8 +22,6 @@ export default function BaseTypeEditor({ rows, onChange }: Props) {
     onChange(next);
   }
 
-  const preview = `type T = {\n  ${rows.map(r => `${r.key}: ${r.type}`).join('\n  ')}\n}`;
-
   return (
     <div style={{
       background: 'white',
@@ -91,7 +89,7 @@ export default function BaseTypeEditor({ rows, onChange }: Props) {
       <div style={{ padding: '12px 14px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {rows.map((row, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div key={i} className="base-type-row" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <input
                 value={row.key}
                 onChange={e => updateRow(i, { key: e.target.value })}
