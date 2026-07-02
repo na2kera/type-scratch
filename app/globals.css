@@ -55,7 +55,12 @@ body {
   scrollbar-width: thin;
 }
 
-@media (max-width: 720px) {
+.app-logo-title {
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+@media (max-width: 1024px) {
   .app-header-inner {
     height: auto;
     min-height: 56px;
