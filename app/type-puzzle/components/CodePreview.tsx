@@ -130,14 +130,14 @@ export default function CodePreview({ source }: Props) {
   }
 
   return (
-    <div style={{
+    <div className="code-preview" style={{
       marginTop: '16px',
       borderRadius: '12px',
       overflow: 'hidden',
       border: '1.5px solid #334155',
     }}>
       {/* Header bar */}
-      <div style={{
+      <div className="code-preview-header" style={{
         background: '#0f172a',
         padding: '7px 14px',
         display: 'flex',
@@ -162,6 +162,7 @@ export default function CodePreview({ source }: Props) {
         </div>
         <button
           onClick={handleCopy}
+          className="code-copy-button"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -183,7 +184,7 @@ export default function CodePreview({ source }: Props) {
       </div>
 
       {/* Code body */}
-      <div style={{
+      <div className="code-preview-body" style={{
         background: '#1e293b',
         padding: '14px 16px',
         fontFamily: 'Menlo, var(--font-geist-mono), ui-monospace, monospace',

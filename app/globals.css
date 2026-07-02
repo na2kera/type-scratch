@@ -26,3 +26,150 @@ select option {
 * {
   box-sizing: border-box;
 }
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.tree-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.code-snippet-scroll,
+.code-preview-body {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.code-snippet-scroll {
+  white-space: nowrap;
+}
+
+.block-shelf-list {
+  scrollbar-width: thin;
+}
+
+@media (max-width: 720px) {
+  .app-header-inner {
+    height: auto;
+    min-height: 56px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .app-logo-title {
+    font-size: 20px !important;
+  }
+
+  .app-header-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .app-main {
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 14px;
+  }
+
+  .mode-toggle {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mode-toggle-button {
+    flex: 1;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .sandbox-layout {
+    flex-direction: column;
+  }
+
+  .sandbox-sidebar,
+  .workspace-column {
+    width: 100% !important;
+  }
+
+  .workspace-titlebar {
+    align-items: flex-start !important;
+    gap: 8px;
+    flex-direction: column;
+  }
+
+  .undo-controls {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .undo-controls > button {
+    flex: 0 0 auto;
+  }
+
+  .base-type-row {
+    flex-wrap: wrap;
+  }
+
+  .base-type-row input {
+    flex: 1 1 120px;
+    width: auto !important;
+  }
+
+  .base-type-row select {
+    flex: 1 1 112px;
+  }
+
+  .puzzle-tabs {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .puzzle-tabs > button {
+    flex: 0 0 auto;
+  }
+
+  .judge-row {
+    align-items: stretch !important;
+    flex-direction: column;
+  }
+
+  .judge-row > button,
+  .judge-row > div {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .code-preview-header {
+    align-items: flex-start !important;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .code-copy-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .block-shelf-panel {
+    max-height: 55vh;
+    overflow-y: auto;
+  }
+
+  .block-palette-item {
+    min-height: 76px !important;
+    padding: 14px 12px !important;
+  }
+}

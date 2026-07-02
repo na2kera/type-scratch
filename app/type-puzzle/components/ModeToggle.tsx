@@ -7,11 +7,12 @@ interface Props {
 
 export default function ModeToggle({ mode, onChange }: Props) {
   return (
-    <div style={{ background: 'rgba(255,255,255,0.18)', borderRadius: '10px', padding: '3px', display: 'flex', gap: '2px' }}>
+    <div className="mode-toggle" style={{ background: 'rgba(255,255,255,0.18)', borderRadius: '10px', padding: '3px', display: 'flex', gap: '2px' }}>
       {(['sandbox', 'puzzle'] as const).map(m => (
         <button
           key={m}
           onClick={() => onChange(m)}
+          className="mode-toggle-button"
           style={{
             padding: '5px 16px',
             borderRadius: '8px',
