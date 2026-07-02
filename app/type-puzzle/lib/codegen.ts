@@ -1,5 +1,5 @@
 import { TypeNode, NodeId } from './types';
-import { renderExpression, walkChildren } from './nodes';
+import { renderExpression, walkChildren, collectInferNamesInExtends, escapeStringLiteral, escapeTemplatePart } from './nodes';
 
 // ─── Readable code generator ────────────────────────────────────────────────
 
@@ -30,7 +30,7 @@ function renderReadable(node: TypeNode, insideExtends: Set<NodeId>): [string, Pr
       return [insideExtends.has(node.id) ? `infer ${node.name}` : node.name, PREC.atom];
 
     case 'literal': {
-      const v = typeof node.value === 'string' ? `'${node.value}'` : String(node.value);
+      const v = typeof node.value === 'string' ? `'${escapeStringLiteral(node.value)}'` : String(node.value);
       return [v, PREC.atom];
     }
 
@@ -49,12 +49,13 @@ function renderReadable(node: TypeNode, insideExtends: Set<NodeId>): [string, Pr
 
     case 'templateLiteral': {
       const parts = node.parts.map(p =>
-        typeof p === 'string' ? p : `\${${renderReadable(p, insideExtends)[0]}}`
+        typeof p === 'string' ? escapeTemplatePart(p) : `\${${renderReadable(p, insideExtends)[0]}}`
       ).join('');
       return [`\`${parts}\``, PREC.atom];
     }
 
     case 'union': {
+      if (node.members.length === 0) return ['never', PREC.atom];
       const members = node.members.map(m => {
         const [expr, prec] = renderReadable(m, insideExtends);
         return wrap(expr, prec, PREC.union);
@@ -63,6 +64,7 @@ function renderReadable(node: TypeNode, insideExtends: Set<NodeId>): [string, Pr
     }
 
     case 'intersection': {
+      if (node.members.length === 0) return ['unknown', PREC.atom];
       const members = node.members.map(m => {
         const [expr, prec] = renderReadable(m, insideExtends);
         return wrap(expr, prec, PREC.intersection);
@@ -138,10 +140,45 @@ function markExtendsSubtree(root: TypeNode, out: Set<NodeId>): void {
   walkChildren(root, child => markExtendsSubtree(child, out));
 }
 
+// conditional の分岐内などで infer 変数を参照しているノードは、トップレベルの
+// type エイリアスに巻き上げるとスコープ外参照になる。束縛されていない infer 名を
+// 含むノードの ID を集めて、インライン展開の対象にする。
+function collectFreeInferIds(root: TypeNode): Set<NodeId> {
+  const result = new Set<NodeId>();
+
+  function visit(node: TypeNode): Set<string> {
+    if (!node) return new Set();
+    let free: Set<string>;
+    if (node.kind === 'infer') {
+      free = new Set([node.name]);
+    } else if (node.kind === 'conditional') {
+      free = node.check ? new Set(visit(node.check)) : new Set();
+      if (node.extends) visit(node.extends);
+      const declared = new Set(node.extends ? collectInferNamesInExtends(node.extends) : []);
+      for (const branch of [node.trueBranch, node.falseBranch]) {
+        if (!branch) continue;
+        for (const name of visit(branch)) {
+          if (!declared.has(name)) free.add(name);
+        }
+      }
+    } else {
+      const collected = new Set<string>();
+      walkChildren(node, child => { visit(child).forEach(n => collected.add(n)); });
+      free = collected;
+    }
+    if (free.size > 0) result.add(node.id);
+    return free;
+  }
+
+  visit(root);
+  return result;
+}
+
 export function generateSource(baseTypeSource: string, root: TypeNode): string {
   const lines = [baseTypeSource];
   const insideExtends = new Set<NodeId>();
   markExtendsSubtree(root, insideExtends);
+  const freeInferIds = collectFreeInferIds(root);
 
   function visit(node: TypeNode): string {
     if ((node as unknown) === null) return 'never';
@@ -152,7 +189,7 @@ export function generateSource(baseTypeSource: string, root: TypeNode): string {
       return node.name;
     }
     const expr = renderExpression(node, visit);
-    if (insideExtends.has(node.id)) return expr;
+    if (insideExtends.has(node.id) || freeInferIds.has(node.id)) return expr;
     const alias = `N_${node.id}`;
     lines.push(`type ${alias} = ${expr};`);
     lines.push(`const __E_${node.id} = null as unknown as ${alias};`);

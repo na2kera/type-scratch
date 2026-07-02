@@ -43,6 +43,8 @@ export default function TypePuzzleApp() {
   const [outputResult, setOutputResult] = useState<NodeTypeResult | undefined>(undefined);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 送信済みリクエストの結果が、より新しい状態を上書きしないようにする世代カウンタ
+  const evalSeqRef = useRef(0);
 
   const current = mode === 'sandbox' ? sandbox : puzzle;
 
@@ -112,6 +114,7 @@ export default function TypePuzzleApp() {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
+      const seq = ++evalSeqRef.current;
       if (!current.present) {
         setTypeResult({});
         setOutputResult(undefined);
@@ -120,6 +123,7 @@ export default function TypePuzzleApp() {
       try {
         const source = generateSource(getBaseTypeSource(), current.present);
         const result = await evaluateType(source);
+        if (seq !== evalSeqRef.current) return;
         setOutputResult(result);
 
         const newTypeResult: TypeResultMap = {};

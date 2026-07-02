@@ -1,7 +1,9 @@
 import { TypeNode, NodeId, SlotRef } from './types';
 import { getAllIds, mapChildren } from './nodes';
 
-export function findNode(root: TypeNode, id: NodeId): TypeNode | null {
+export function findNode(root: TypeNode | null, id: NodeId): TypeNode | null {
+  // 単一スロット(array/keyofなど)の子は × ボタンや取り外しで null になりうる
+  if (!root) return null;
   if (root.id === id) return root;
   switch (root.kind) {
     case 'object': for (const p of root.props) { const r = findNode(p.value, id); if (r) return r; } break;
@@ -33,14 +35,15 @@ function removeNode(root: TypeNode, id: NodeId): [TypeNode | null, TypeNode | nu
   let extracted: TypeNode | null = null;
 
   function remove(node: TypeNode): TypeNode | null {
+    if (!node) return node;
     switch (node.kind) {
       case 'object': {
         const newProps = node.props.map(p => {
-          if (p.value.id === id) { extracted = p.value; return { ...p, value: null as unknown as TypeNode }; }
-          const v = remove(p.value);
+          if (p.value?.id === id) { extracted = p.value; return null; }
+          const v = p.value ? remove(p.value) : p.value;
           return { ...p, value: v ?? p.value };
-        }).filter(p => p.value !== null);
-        return { ...node, props: newProps as typeof node.props };
+        }).filter((p): p is { key: string; value: TypeNode; optional?: boolean } => p !== null);
+        return { ...node, props: newProps };
       }
       case 'union': {
         const members = node.members.map(m => {
@@ -64,32 +67,33 @@ function removeNode(root: TypeNode, id: NodeId): [TypeNode | null, TypeNode | nu
         return { ...node, elements };
       }
       case 'array': {
-        if (node.element.id === id) { extracted = node.element; return { ...node, element: null as unknown as TypeNode }; }
-        const el = remove(node.element); return el ? { ...node, element: el } : node;
+        if (node.element?.id === id) { extracted = node.element; return { ...node, element: null as unknown as TypeNode }; }
+        const el = node.element ? remove(node.element) : null; return el ? { ...node, element: el } : node;
       }
       case 'keyof': {
-        if (node.target.id === id) { extracted = node.target; return { ...node, target: null as unknown as TypeNode }; }
-        const t = remove(node.target); return t ? { ...node, target: t } : node;
+        if (node.target?.id === id) { extracted = node.target; return { ...node, target: null as unknown as TypeNode }; }
+        const t = node.target ? remove(node.target) : null; return t ? { ...node, target: t } : node;
       }
       case 'indexedAccess': {
-        if (node.target.id === id) { extracted = node.target; return { ...node, target: null as unknown as TypeNode }; }
-        if (node.key.id === id) { extracted = node.key; return { ...node, key: null as unknown as TypeNode }; }
-        const t = remove(node.target);
-        const k = remove(node.key);
+        if (node.target?.id === id) { extracted = node.target; return { ...node, target: null as unknown as TypeNode }; }
+        if (node.key?.id === id) { extracted = node.key; return { ...node, key: null as unknown as TypeNode }; }
+        const t = node.target ? remove(node.target) : null;
+        const k = node.key ? remove(node.key) : null;
         return { ...node, target: t ?? node.target, key: k ?? node.key };
       }
       case 'mappedType': {
-        if (node.keys.id === id) { extracted = node.keys; return { ...node, keys: null as unknown as TypeNode }; }
-        if (node.source.id === id) { extracted = node.source; return { ...node, source: null as unknown as TypeNode }; }
-        const keys = remove(node.keys);
-        const src = remove(node.source);
+        if (node.keys?.id === id) { extracted = node.keys; return { ...node, keys: null as unknown as TypeNode }; }
+        if (node.source?.id === id) { extracted = node.source; return { ...node, source: null as unknown as TypeNode }; }
+        const keys = node.keys ? remove(node.keys) : null;
+        const src = node.source ? remove(node.source) : null;
         return { ...node, keys: keys ?? node.keys, source: src ?? node.source };
       }
       case 'conditional': {
         const slots = ['check', 'extends', 'trueBranch', 'falseBranch'] as const;
         let updated: TypeNode = node;
         for (const slot of slots) {
-          const child = (node as unknown as Record<string, TypeNode>)[slot];
+          const child = (node as unknown as Record<string, TypeNode | null>)[slot];
+          if (!child) continue;
           if (child.id === id) { extracted = child; updated = { ...updated, [slot]: null }; continue; }
           const r = remove(child);
           if (r) updated = { ...updated, [slot]: r };
@@ -98,7 +102,7 @@ function removeNode(root: TypeNode, id: NodeId): [TypeNode | null, TypeNode | nu
       }
       case 'templateLiteral': {
         const parts = node.parts.map(p => {
-          if (typeof p === 'string') return p;
+          if (!p || typeof p === 'string') return p;
           if (p.id === id) { extracted = p; return null; }
           return remove(p) ?? p;
         }).filter((p): p is string | TypeNode => p !== null);
@@ -112,7 +116,7 @@ function removeNode(root: TypeNode, id: NodeId): [TypeNode | null, TypeNode | nu
   return [newRoot, extracted];
 }
 
-function insertAt(root: TypeNode | null, target: SlotRef, node: TypeNode): [TypeNode | null, TypeNode | null] {
+function insertAt(root: TypeNode | null, target: SlotRef, node: TypeNode, propKey?: string): [TypeNode | null, TypeNode | null] {
   // returns [newRoot, displaced] - displaced is non-null on swap
   if (target.kind === 'root') {
     return [node, root];
@@ -144,7 +148,7 @@ function insertAt(root: TypeNode | null, target: SlotRef, node: TypeNode): [Type
       }
       if (n.kind === 'object' && slot === 'props') {
         const arr = [...n.props];
-        const newProp = { key: 'newKey', value: node };
+        const newProp = { key: propKey ?? 'newKey', value: node };
         if (target.kind === 'listAppend') arr.push(newProp);
         else arr.splice(target.index, 0, newProp);
         return { ...n, props: arr };
@@ -171,7 +175,25 @@ export function canDrop(root: TypeNode | null, draggedId: NodeId, target: SlotRe
 
   if (target.kind === 'root') return true;
   if (descendantIds.has(target.parentId)) return false;
+
+  // 単一スロットの現在の占有者が dragged の祖先の場合、追い出された占有者の
+  // 戻し先(draggedの元位置)が占有者自身の中になり成立しないため禁止する
+  if (target.kind === 'single') {
+    const parent = findNode(root, target.parentId);
+    if (parent) {
+      const occupant = (parent as unknown as Record<string, TypeNode | null>)[target.slot] ?? null;
+      if (occupant && occupant.id !== draggedId && getAllIds(occupant).has(draggedId)) return false;
+    }
+  }
   return true;
+}
+
+/** dragged が object のプロパティ値だった場合、そのキー名を返す */
+function getPropKey(root: TypeNode, slot: SlotRef | null): string | undefined {
+  if (!slot || slot.kind !== 'list' || slot.slot !== 'props') return undefined;
+  const parent = findNode(root, slot.parentId);
+  if (!parent || parent.kind !== 'object') return undefined;
+  return parent.props[slot.index]?.key;
 }
 
 export function moveNode(root: TypeNode | null, draggedId: NodeId, target: SlotRef): TypeNode | null {
@@ -180,20 +202,23 @@ export function moveNode(root: TypeNode | null, draggedId: NodeId, target: SlotR
   const [afterRemove, extracted] = removeNode(root, draggedId);
   if (!extracted) return root;
 
-  const adjustedTarget = adjustTargetIndex(target, draggedId, root, target);
-  const [newRoot, displaced] = insertAt(afterRemove, adjustedTarget, extracted);
+  const originalSlot = findParentSlot(root, draggedId);
+  const originalKey = getPropKey(root, originalSlot);
+  const adjustedTarget = adjustTargetIndex(target, draggedId, root);
+  const [newRoot, displaced] = insertAt(afterRemove, adjustedTarget, extracted, originalKey);
 
   if (!displaced) return newRoot;
 
   // put displaced back where dragged was - find original parent slot
-  const originalSlot = findParentSlot(root, draggedId);
-  if (!originalSlot) return newRoot;
+  if (!originalSlot) return root; // 戻し先がない = displaced が消えるので移動をキャンセル
 
-  const [finalRoot] = insertAt(newRoot, originalSlot, displaced);
+  const [finalRoot] = insertAt(newRoot, originalSlot, displaced, originalKey);
+  // 戻し先が displaced 自身の内部だった等で復元できなかった場合も移動をキャンセル
+  if (!finalRoot || !findNode(finalRoot, displaced.id)) return root;
   return finalRoot;
 }
 
-function adjustTargetIndex(target: SlotRef, draggedId: NodeId, root: TypeNode, _orig: SlotRef): SlotRef {
+function adjustTargetIndex(target: SlotRef, draggedId: NodeId, root: TypeNode): SlotRef {
   if (target.kind !== 'list') return target;
   // When moving within the same list, if original index < target index, offset by -1
   const parentNode = findNode(root, target.parentId);
@@ -204,6 +229,10 @@ function adjustTargetIndex(target: SlotRef, draggedId: NodeId, root: TypeNode, _
     originalIndex = parentNode.members.findIndex(m => m.id === draggedId);
   } else if (parentNode.kind === 'tuple' && target.slot === 'elements') {
     originalIndex = parentNode.elements.findIndex(e => e.id === draggedId);
+  } else if (parentNode.kind === 'object' && target.slot === 'props') {
+    originalIndex = parentNode.props.findIndex(p => p.value?.id === draggedId);
+  } else if (parentNode.kind === 'templateLiteral' && target.slot === 'parts') {
+    originalIndex = parentNode.parts.findIndex(p => typeof p !== 'string' && p?.id === draggedId);
   }
 
   if (originalIndex >= 0 && originalIndex < target.index) {
@@ -213,11 +242,12 @@ function adjustTargetIndex(target: SlotRef, draggedId: NodeId, root: TypeNode, _
 }
 
 function findParentSlot(root: TypeNode, childId: NodeId): SlotRef | null {
-  function search(node: TypeNode): SlotRef | null {
+  function search(node: TypeNode | null): SlotRef | null {
+    if (!node) return null;
     switch (node.kind) {
       case 'object': {
         for (let i = 0; i < node.props.length; i++) {
-          if (node.props[i].value.id === childId) return { kind: 'list', parentId: node.id, slot: 'props', index: i };
+          if (node.props[i].value?.id === childId) return { kind: 'list', parentId: node.id, slot: 'props', index: i };
           const r = search(node.props[i].value); if (r) return r;
         }
         break;
@@ -238,28 +268,28 @@ function findParentSlot(root: TypeNode, childId: NodeId): SlotRef | null {
         break;
       }
       case 'array': {
-        if (node.element.id === childId) return { kind: 'single', parentId: node.id, slot: 'element' };
+        if (node.element?.id === childId) return { kind: 'single', parentId: node.id, slot: 'element' };
         return search(node.element);
       }
       case 'keyof': {
-        if (node.target.id === childId) return { kind: 'single', parentId: node.id, slot: 'target' };
+        if (node.target?.id === childId) return { kind: 'single', parentId: node.id, slot: 'target' };
         return search(node.target);
       }
       case 'indexedAccess': {
-        if (node.target.id === childId) return { kind: 'single', parentId: node.id, slot: 'target' };
-        if (node.key.id === childId) return { kind: 'single', parentId: node.id, slot: 'key' };
+        if (node.target?.id === childId) return { kind: 'single', parentId: node.id, slot: 'target' };
+        if (node.key?.id === childId) return { kind: 'single', parentId: node.id, slot: 'key' };
         return search(node.target) || search(node.key);
       }
       case 'mappedType': {
-        if (node.keys.id === childId) return { kind: 'single', parentId: node.id, slot: 'keys' };
-        if (node.source.id === childId) return { kind: 'single', parentId: node.id, slot: 'source' };
+        if (node.keys?.id === childId) return { kind: 'single', parentId: node.id, slot: 'keys' };
+        if (node.source?.id === childId) return { kind: 'single', parentId: node.id, slot: 'source' };
         return search(node.keys) || search(node.source);
       }
       case 'conditional': {
         const slots = ['check', 'extends', 'trueBranch', 'falseBranch'] as const;
         for (const slot of slots) {
-          const child = (node as unknown as Record<string, TypeNode>)[slot] as TypeNode;
-          if (child.id === childId) return { kind: 'single', parentId: node.id, slot };
+          const child = (node as unknown as Record<string, TypeNode | null>)[slot];
+          if (child?.id === childId) return { kind: 'single', parentId: node.id, slot };
           const r = search(child); if (r) return r;
         }
         break;
@@ -267,7 +297,7 @@ function findParentSlot(root: TypeNode, childId: NodeId): SlotRef | null {
       case 'templateLiteral': {
         for (let i = 0; i < node.parts.length; i++) {
           const p = node.parts[i];
-          if (typeof p !== 'string') {
+          if (p && typeof p !== 'string') {
             if (p.id === childId) return { kind: 'list', parentId: node.id, slot: 'parts', index: i };
             const r = search(p); if (r) return r;
           }
